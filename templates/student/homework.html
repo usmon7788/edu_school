@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.homework }} - {{ t.student_portal }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+    <!-- Sahifa sarlavhasi -->
+    <div class="page-header-box anim-1">
+        <div>
+            <h1 class="page-header-title">
+                <i class="fa-solid fa-book-open text-primary"></i> {{ t.homework }}
+            </h1>
+            <p class="page-header-subtitle">{{ classroom.name|default:t.class_room }} {{ t.hw_student_subtitle }}</p>
+        </div>
+        <div>
+            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">
+                <i class="fa-regular fa-calendar-check me-1 text-primary"></i> {{ t.today }}: {{ today|date:"d.m.Y" }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4 anim-2">
+        {% for hw in homeworks %}
+            <div class="col-md-6 col-xl-4">
+                <div class="card card-modern card-lift h-100 p-4 d-flex flex-column border-0 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="subject-pill">{{ hw.subject.name|t_sub:current_lang }}</span>
+                        {% if hw.due_date < today %}
+                            <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill small fw-bold">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ t.expired }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill small fw-bold">
+                                <i class="fa-regular fa-clock me-1"></i> {{ hw.due_date|date:"d.m.Y" }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-2">{{ hw.title }}</h5>
+                    <p class="text-muted small flex-grow-1" style="white-space: pre-line; line-height: 1.5;">{{ hw.description }}</p>
+
+                    <div class="pt-3 border-top mt-auto">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small text-muted">
+                                <i class="fa-solid fa-chalkboard-user text-primary me-1"></i> {{ hw.teacher.full_name }}
+                            </div>
+                            {% if hw.file %}
+                                <a href="{{ hw.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm px-3 rounded-pill fw-semibold">
+                                    <i class="fa-solid fa-download me-1"></i> {{ t.file_attachment }}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card card-modern p-5 text-center text-muted border-0 shadow-sm">
+                    <div class="stat-icon-wrapper bg-success-subtle text-success mx-auto mb-3" style="width: 70px; height: 70px; font-size: 2rem; border-radius:20px; display:flex; align-items:center; justify-content:center;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1">{{ t.no_hw_student }}</h5>
+                    <p class="small mb-0 text-muted">{{ t.no_hw_student_hint }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

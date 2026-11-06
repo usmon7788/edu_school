@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.register }} - {{ t.school_portal }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-9 col-lg-8 col-xl-7">
+            <div class="card card-modern p-4 p-md-5 border-0 shadow-lg">
+                <!-- Sarlavha qismi -->
+                <div class="text-center mb-4">
+                    <div class="brand-badge mb-3" style="width: 60px; height: 60px; font-size: 1.8rem; border-radius: 16px;">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <h2 class="fw-bold mb-1">
+                        {{ t.register }}
+                    </h2>
+                    <p class="text-muted small">{{ t.registration_subtitle }}</p>
+                </div>
+
+                <form method="post" id="registerForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Rol tanlash -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark mb-2 small text-uppercase" style="letter-spacing: 0.05em;">
+                            {{ t.role }}:
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <input type="radio" class="role-card-input" name="role" id="role_student" value="student" checked onchange="toggleRoleFields('student')">
+                                <label class="role-card-label" for="role_student">
+                                    <span class="check-badge"><i class="fa-solid fa-check"></i></span>
+                                    <div class="role-icon-box">
+                                        <i class="fa-solid fa-user-graduate"></i>
+                                    </div>
+                                    <div class="role-title">{{ t.student }}</div>
+                                    <div class="role-desc">{{ t.student_role_desc }}</div>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="role-card-input" name="role" id="role_teacher" value="teacher" onchange="toggleRoleFields('teacher')">
+                                <label class="role-card-label" for="role_teacher">
+                                    <span class="check-badge"><i class="fa-solid fa-check"></i></span>
+                                    <div class="role-icon-box">
+                                        <i class="fa-solid fa-chalkboard-user"></i>
+                                    </div>
+                                    <div class="role-title">{{ t.teacher }}</div>
+                                    <div class="role-desc">{{ t.teacher_role_desc }}</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ism va Familiya -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-secondary">{{ t.first_name }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                                {{ form.first_name }}
+                            </div>
+                            {% if form.first_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-secondary">{{ t.last_name }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-id-card"></i></span>
+                                {{ form.last_name }}
+                            </div>
+                            {% if form.last_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Login (Username) + Tasodifiy raqam qo'shish -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-semibold small text-secondary mb-0">
+                                    {{ t.username }} <span class="text-danger">*</span>
+                                </label>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold" id="btnGenRegLogin" style="font-size:0.75rem;">
+                                    <i class="fa-solid fa-dice text-primary me-1"></i> {{ t.random_login_btn }}
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-at"></i></span>
+                                {{ form.username }}
+                            </div>
+                            {% if form.username.errors %}
+                                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-secondary">{{ t.phone_number }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
+                                {{ form.phone }}
+                            </div>
+                            {% if form.phone.errors %}
+                                <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Maktab tanlash -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">
+                            {{ t.school_name }} <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-school"></i></span>
+                            {{ form.school }}
+                        </div>
+                        {% if form.school.errors %}
+                            <div class="text-danger small mt-1">{{ form.school.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Faqat O'quvchi uchun: Sinf tanlash (28 limit nazorati) -->
+                    <div class="mb-3 p-3 rounded-3 bg-light border" id="studentFields">
+                        <label class="form-label fw-bold small text-dark mb-1">
+                            <i class="fa-solid fa-users-rectangle text-primary me-1"></i> {{ t.select_classroom }} <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group mb-1">
+                            <span class="input-group-text"><i class="fa-solid fa-chalkboard"></i></span>
+                            {{ form.classroom }}
+                        </div>
+                        <div class="d-flex align-items-center gap-1 text-primary small mt-2">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>{{ t.notice_28_limit }}</span>
+                        </div>
+                        {% if form.classroom.errors %}
+                            <div class="text-danger small mt-1 fw-semibold">{{ form.classroom.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Faqat Ustoz uchun: Fan tanlash -->
+                    <div class="mb-3 p-3 rounded-3 bg-light border" id="teacherFields" style="display: none;">
+                        <label class="form-label fw-bold small text-dark mb-1">
+                            <i class="fa-solid fa-book-open text-primary me-1"></i> {{ t.select_subject }} <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group mb-1">
+                            <span class="input-group-text"><i class="fa-solid fa-book-bookmark"></i></span>
+                            {{ form.subject }}
+                        </div>
+                        <div class="text-muted small mt-2">
+                            <i class="fa-solid fa-circle-check text-success me-1"></i>
+                            {{ t.grading_rule_notice }}
+                        </div>
+                        {% if form.subject.errors %}
+                            <div class="text-danger small mt-1 fw-semibold">{{ form.subject.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Parol va Parolni tasdiqlash + Tasodifiy parol generatsiya qilish -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold small text-secondary mb-0">
+                                {{ t.password }} va {{ t.confirm_password }} <span class="text-danger">*</span>
+                            </label>
+                            <button type="button" class="btn btn-outline-success btn-sm py-1 px-2 fw-semibold" id="btnGenRegPass" style="font-size:0.8rem;">
+                                <i class="fa-solid fa-dice me-1"></i> {{ t.random_password_btn }}
+                            </button>
+                        </div>
+
+                        <!-- Generated password visual badge -->
+                        <div id="genPassAlertBox" class="p-3 rounded-3 mb-2" style="display:none; background: #ecfdf5; border: 1px solid #a7f3d0;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="small">
+                                    <span class="text-muted">Sizning tasodifiy parolingiz:</span>
+                                    <code class="fs-5 fw-bold ms-2 text-success" id="genPassDisplayCode"></code>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-success text-white px-2 py-1" id="btnCopyRegPass">
+                                    <i class="fa-solid fa-copy me-1"></i> {{ t.copy_password }}
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-1">Ushbu parol avtomatik ravishda ikkala maydonga ham kiritildi.</small>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                                    {{ form.password }}
+                                </div>
+                                {% if form.password.errors %}
+                                    <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-shield-halved"></i></span>
+                                    {{ form.confirm_password }}
+                                </div>
+                                {% if form.confirm_password.errors %}
+                                    <div class="text-danger small mt-1">{{ form.confirm_password.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ro'yxatdan o'tish tugmasi -->
+                    <button type="submit" class="btn btn-primary-custom w-100 py-3 fs-6 mb-3 shadow-glow-primary">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> {{ t.register }}
+                    </button>
+
+                    <div class="text-center">
+                        <span class="text-muted small">{{ t.have_account }}</span>
+                        <a href="{% url 'login' %}" class="fw-bold text-primary text-decoration-none ms-1 small">
+                            {{ t.login }}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleRoleFields(role) {
+        const studentBox = document.getElementById('studentFields');
+        const teacherBox = document.getElementById('teacherFields');
+        if (role === 'teacher') {
+            studentBox.style.display = 'none';
+            teacherBox.style.display = 'block';
+        } else {
+            studentBox.style.display = 'block';
+            teacherBox.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkedRole = document.querySelector('input[name="role"]:checked')?.value || 'student';
+        toggleRoleFields(checkedRole);
+
+        // Random login (ism + raqam)
+        document.getElementById('btnGenRegLogin')?.addEventListener('click', function() {
+            const firstInput = document.querySelector('input[name="first_name"]');
+            const usernameInput = document.querySelector('input[name="username"]');
+            const val = firstInput ? firstInput.value.trim() : '';
+            const clean = val.toLowerCase().replace(/[^a-z0-9]/g, '') || 'foydalanuvchi';
+            const randNum = Math.floor(1000 + Math.random() * 9000);
+            if (usernameInput) {
+                usernameInput.value = clean + '_' + randNum;
+            }
+        });
+
+        // Random password (6 xonali tasodifiy sonlar)
+        document.getElementById('btnGenRegPass')?.addEventListener('click', function() {
+            const passInputs = document.querySelectorAll('input[type="password"]');
+            const randPass = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            passInputs.forEach(input => {
+                input.value = randPass;
+                // Foydalanuvchi ko'rishi uchun text ga o'zgartiramiz
+                input.type = 'text';
+            });
+
+            const alertBox = document.getElementById('genPassAlertBox');
+            const codeEl = document.getElementById('genPassDisplayCode');
+            if (alertBox && codeEl) {
+                codeEl.innerText = randPass;
+                alertBox.style.display = 'block';
+            }
+        });
+
+        // Copy button
+        document.getElementById('btnCopyRegPass')?.addEventListener('click', function() {
+            const codeEl = document.getElementById('genPassDisplayCode');
+            if (codeEl) {
+                navigator.clipboard.writeText(codeEl.innerText.trim()).then(() => {
+                    const btn = document.getElementById('btnCopyRegPass');
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> {{ t.copied }}';
+                    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

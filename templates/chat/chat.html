@@ -1,0 +1,3092 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load lang_tags %}
+
+{% block title %}Muloqot Markazi | EduMaktab{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ========================================================
+   YANGICHA SLEEK NEO-GLASS CHAT DIZAYNI
+   ======================================================== */
+.chat-app-wrapper {
+    height: calc(100vh - 135px);
+    min-height: 620px;
+    background: var(--bg-card);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    display: flex;
+    position: relative;
+}
+
+/* Chap panel - Suhbatlar */
+.chat-sidebar {
+    width: 370px;
+    min-width: 310px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-sidebar-header {
+    padding: 1.25rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chat-btn-new {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 12px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    cursor: pointer;
+}
+
+.chat-btn-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+.chat-search-box {
+    position: relative;
+    margin-top: 0.85rem;
+}
+
+.chat-search-input {
+    width: 100%;
+    padding: 0.65rem 1rem 0.65rem 2.5rem;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+.chat-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.chat-search-icon {
+    position: absolute;
+    left: 0.95rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+/* Suhbatlar ro'yxati */
+.chat-contacts-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.6rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    margin-bottom: 0.35rem;
+    border: 1px solid transparent;
+    position: relative;
+}
+
+.contact-item:hover {
+    background: rgba(99, 102, 241, 0.06);
+}
+
+.contact-item.active {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.25);
+}
+
+.contact-avatar-wrap {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.contact-avatar-img,
+.contact-avatar-initials {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.contact-avatar-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #ffffff;
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+}
+
+/* Yashil Online status */
+.online-indicator-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 2px solid var(--bg-card);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+.online-indicator-dot.pulse {
+    animation: onlinePulseDot 2s infinite;
+}
+
+@keyframes onlinePulseDot {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.offline-indicator-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #94a3b8;
+    border: 2px solid var(--bg-card);
+}
+
+.contact-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-name-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.15rem;
+}
+
+.contact-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 0.4rem;
+}
+
+.contact-time {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.contact-last-msg-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.contact-last-msg {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.contact-badge-role {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 6px;
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary);
+    display: inline-block;
+    margin-bottom: 0.2rem;
+}
+
+.contact-badge-role.teacher {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+}
+
+.unread-badge {
+    background: linear-gradient(135deg, #ef4444, #f43f5e);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+/* O'ng panel - Suhbat oynasi */
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-body);
+    position: relative;
+}
+
+/* Chat Header */
+.chat-main-header {
+    padding: 0.9rem 1.5rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-header-user {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.chat-back-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    padding: 0.4rem;
+    border-radius: 8px;
+    margin-right: 0.2rem;
+}
+
+.chat-header-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chat-header-status {
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.chat-header-status.online {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.chat-header-status.offline {
+    color: var(--text-muted);
+}
+
+/* Xabarlar konteyneri */
+.chat-messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.chat-date-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.6rem 0;
+}
+
+.chat-date-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 0.25rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+/* Xabar Pufakchalari */
+.message-bubble-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    max-width: 75%;
+    animation: fadeInMsg 0.2s ease-out;
+}
+
+@keyframes fadeInMsg {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message-bubble-row.outgoing {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.message-bubble-row.incoming {
+    align-self: flex-start;
+}
+
+.message-bubble {
+    padding: 0.75rem 1rem 0.55rem;
+    border-radius: 18px;
+    position: relative;
+    word-break: break-word;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.message-bubble-row.outgoing .message-bubble {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+}
+
+.message-bubble-row.incoming .message-bubble {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.message-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    font-size: 0.68rem;
+    margin-top: 0.35rem;
+}
+
+.message-bubble-row.outgoing .message-meta {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.message-bubble-row.incoming .message-meta {
+    color: var(--text-muted);
+}
+
+/* ULASHILGAN POST VA BAHOLAR KARTALARI */
+.shared-bubble-card {
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    transition: transform 0.15s ease;
+}
+
+.message-bubble-row.outgoing .shared-bubble-card {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+}
+
+.message-bubble-row.incoming .shared-bubble-card {
+    background: rgba(99, 102, 241, 0.06);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    color: var(--text-primary);
+}
+
+.shared-bubble-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+}
+
+.shared-post-content-preview {
+    font-size: 0.82rem;
+    line-height: 1.35;
+    opacity: 0.95;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.shared-post-img-thumb {
+    width: 100%;
+    max-height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 4px;
+}
+
+.shared-grade-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.shared-grade-num {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    flex-shrink: 0;
+}
+
+.shared-grade-num.grade-4 {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+}
+
+.shared-grade-num.grade-3 {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+}
+
+.shared-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-decoration: none;
+    margin-top: 4px;
+    align-self: flex-start;
+    padding: 3px 9px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.message-bubble-row.outgoing .shared-link-btn {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+.message-bubble-row.outgoing .shared-link-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+}
+
+.message-bubble-row.incoming .shared-link-btn {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary);
+}
+
+.message-bubble-row.incoming .shared-link-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+}
+
+/* OVOZLI XABAR (VOICE MESSAGE) STILI */
+.voice-message-player {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 210px;
+    padding: 4px 0;
+}
+
+.voice-play-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.message-bubble-row.outgoing .voice-play-btn {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+.message-bubble-row.outgoing .voice-play-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.05);
+}
+
+.message-bubble-row.incoming .voice-play-btn {
+    background: #6366f1;
+    color: #ffffff;
+}
+
+.message-bubble-row.incoming .voice-play-btn:hover {
+    background: #4f46e5;
+    transform: scale(1.05);
+}
+
+.voice-waveform-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.voice-bars {
+    display: flex;
+    align-items: center;
+    gap: 2.5px;
+    height: 22px;
+}
+
+.voice-bar {
+    width: 3px;
+    border-radius: 2px;
+    transition: height 0.2s ease;
+}
+
+.message-bubble-row.outgoing .voice-bar {
+    background: rgba(255, 255, 255, 0.75);
+}
+
+.message-bubble-row.incoming .voice-bar {
+    background: #818cf8;
+}
+
+.voice-bar.playing {
+    animation: waveBounce 0.6s infinite alternate ease-in-out;
+}
+
+@keyframes waveBounce {
+    0% { height: 6px; }
+    100% { height: 20px; }
+}
+
+.voice-duration {
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.message-bubble-row.outgoing .voice-duration {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.message-bubble-row.incoming .voice-duration {
+    color: var(--text-muted);
+}
+
+/* XABAR HARAKATLARI (DELETE VA FORWARD) */
+.message-bubble-row {
+    position: relative;
+}
+
+.msg-action-btns {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    position: absolute;
+    top: -14px;
+    z-index: 5;
+    animation: fadeInMsg 0.15s ease-out;
+}
+
+.message-bubble-row.outgoing .msg-action-btns {
+    right: 10px;
+}
+
+.message-bubble-row.incoming .msg-action-btns {
+    left: 10px;
+}
+
+.message-bubble-row:hover .msg-action-btns {
+    display: inline-flex;
+}
+
+.btn-msg-action {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-msg-action:hover {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.btn-msg-action.btn-msg-delete:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+.msg-forwarded-tag {
+    font-size: 0.72rem;
+    font-style: italic;
+    opacity: 0.88;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.25);
+}
+
+.message-bubble-row.incoming .msg-forwarded-tag {
+    border-bottom-color: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+}
+
+.message-bubble-row.outgoing .msg-forwarded-tag {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* DUMALOQ VIDEO XABAR (TELEGRAM CIRCULAR VIDEO NOTES) */
+.chat-btn-video {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    font-size: 1.15rem;
+}
+
+.chat-btn-video:hover {
+    background: rgba(16, 185, 129, 0.2);
+    transform: scale(1.05);
+}
+
+.chat-btn-attachment {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.chat-btn-attachment:hover {
+    background: rgba(245, 158, 11, 0.2);
+    transform: scale(1.05);
+}
+
+.chat-video-upload-status {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 8px);
+    z-index: 2;
+    max-width: min(100%, 420px);
+    padding: 7px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+}
+
+.video-circle-player-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0;
+}
+
+.video-circle-bubble {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    border: 3.5px solid #6366f1;
+    aspect-ratio: 1/1;
+    transition: transform 0.2s ease;
+}
+
+.video-circle-bubble:hover {
+    transform: scale(1.02);
+}
+
+.message-bubble-row.outgoing .video-circle-bubble {
+    border-color: #818cf8;
+}
+
+.video-circle-element {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.video-circle-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    transition: opacity 0.2s ease;
+    border-radius: 50%;
+}
+
+.video-circle-overlay.playing {
+    opacity: 0;
+}
+
+.video-circle-bubble:hover .video-circle-overlay.playing {
+    opacity: 0.6;
+}
+
+.video-circle-icon {
+    color: #ffffff;
+    font-size: 2.4rem;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+
+.video-circle-meta {
+    font-size: 0.72rem;
+    opacity: 0.85;
+    font-weight: 600;
+}
+
+.video-file-attachment {
+    display: block;
+    width: min(100%, 420px);
+    max-height: 300px;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    border-radius: 14px;
+    background: #0f172a;
+}
+
+/* Chat Input Maydoni */
+.chat-input-area {
+    padding: 0.85rem 1.5rem;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    position: relative;
+}
+
+.chat-input-form {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    position: relative;
+}
+
+.chat-input-text {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    background: var(--bg-body);
+    color: var(--text-primary);
+    border-radius: 24px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.92rem;
+    resize: none;
+    max-height: 120px;
+    min-height: 46px;
+    line-height: 1.4;
+    transition: all 0.2s ease;
+}
+
+.chat-input-text:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.chat-action-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.chat-btn-voice {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+    font-size: 1.15rem;
+}
+
+.chat-btn-voice:hover {
+    background: rgba(99, 102, 241, 0.2);
+    transform: scale(1.05);
+}
+
+.chat-btn-voice.recording {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    animation: recPulse 1s infinite;
+}
+
+@keyframes recPulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+    70% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.chat-send-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    font-size: 1rem;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+.chat-send-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
+}
+
+/* Ovoz yozish vaqti paneli */
+.voice-recording-overlay {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-body);
+    border: 1px solid #ef4444;
+    border-radius: 24px;
+    padding: 0.6rem 1.25rem;
+    flex: 1;
+    animation: fadeInMsg 0.2s ease;
+}
+
+.voice-recording-overlay.active {
+    display: flex;
+}
+
+.rec-blinking-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+.rec-timer {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #ef4444;
+}
+
+.rec-cancel-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: auto;
+}
+
+.rec-cancel-btn:hover {
+    color: #ef4444;
+}
+
+/* Yangi suhbat modali */
+.modal-modern .modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.dir-user-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    margin-bottom: 0.3rem;
+}
+
+.dir-user-item:hover {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .chat-sidebar { width: 100%; }
+    .chat-main {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: 20;
+        display: none;
+    }
+    .chat-main.mobile-active { display: flex; }
+    .chat-back-btn { display: inline-flex; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4">
+    <!-- Asosiy Chat Ilovasi -->
+    <div class="chat-app-wrapper" id="chatAppWrapper">
+
+        <!-- ===== CHAP PANEL: Suhbatlar ===== -->
+        <div class="chat-sidebar" id="chatSidebar">
+            <!-- Header & Yangi suhbat tugmasi -->
+            <div class="chat-sidebar-header">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="fw-bold fs-6">Suhbatlar</span>
+                    <button type="button" class="chat-btn-new" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                        <i class="fa-solid fa-plus"></i> Yangi suhbat
+                    </button>
+                </div>
+                <div class="chat-search-box">
+                    <i class="fa-solid fa-magnifying-glass chat-search-icon"></i>
+                    <input type="text" id="contactSearchInput" class="chat-search-input" placeholder="Suhbatlardan qidirish...">
+                </div>
+            </div>
+
+            <!-- Suhbatlar Ro'yxati (Faqat xabarlashilganlar) -->
+            <div class="chat-contacts-list" id="chatContactsList">
+                {% for item in contacts %}
+                <a href="{% url 'chat_with_user' item.user.id %}" 
+                   class="contact-item {% if active_partner and active_partner.id == item.user.id %}active{% endif %}"
+                   data-name="{{ item.display_name|default:item.user.full_name|lower }}"
+                   data-role="{{ item.user.role }}">
+
+                    <!-- Avatar + Online Indikator -->
+                    <div class="contact-avatar-wrap">
+                        {% if item.user.avatar and item.user.avatar.name %}
+                        <img src="{{ item.user.avatar.url }}" alt="{{ item.display_name|default:item.user.full_name }}" class="contact-avatar-img">
+                        {% else %}
+                        <div class="contact-avatar-initials">
+                            {{ item.display_name|default:item.user.full_name|slice:":1"|upper }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Online nuqtasi -->
+                        {% if item.is_online %}
+                        <span class="online-indicator-dot pulse" title="Hozir online"></span>
+                        {% else %}
+                        <span class="offline-indicator-dot" title="{{ item.last_seen_display }}"></span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Ma'lumot -->
+                    <div class="contact-info">
+                        <div class="contact-name-row">
+                            <span class="contact-name">{{ item.display_name|default:item.user.full_name }}</span>
+                            <span class="contact-time">
+                                {% if item.last_message %}
+                                {{ item.last_message.formatted_time }}
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div>
+                            {% if item.user.role == 'teacher' %}
+                            <span class="contact-badge-role teacher">
+                                Ustoz{% if item.user.subject %}: {{ item.user.subject.name }}{% endif %}
+                            </span>
+                            {% elif item.user.role == 'student' %}
+                            <span class="contact-badge-role">
+                                {{ item.user.classroom.name|default:"O'quvchi" }}
+                            </span>
+                            {% else %}
+                            <span class="contact-badge-role">Ma'mur</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="contact-last-msg-row">
+                            <span class="contact-last-msg">
+                                {% if item.last_message %}
+                                    {% if item.last_message.is_voice %}
+                                    <i class="fa-solid fa-microphone text-primary me-1"></i> Ovozli xabar
+                                    {% elif item.last_message.is_video %}
+                                    <i class="fa-solid fa-circle-play text-primary me-1"></i> Dumaloq video
+                                    {% elif item.last_message.attachment_is_video %}
+                                    <i class="fa-solid fa-film text-primary me-1"></i> Video fayl
+                                    {% else %}
+                                        {% if item.last_message.sender_id == request.user.id %}
+                                        <span class="text-primary me-1">Siz:</span>
+                                        {% endif %}
+                                        {{ item.last_message.message|truncatechars:25 }}
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted fst-italic">Hali xabar yo'q</span>
+                                {% endif %}
+                            </span>
+
+                            {% if item.unread_count > 0 %}
+                            <span class="unread-badge">{{ item.unread_count }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center py-5 px-3">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3"
+                         style="width: 64px; height: 64px; background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                        <i class="fa-regular fa-comment-dots fs-3"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1">Suhbatlar yo'q</h6>
+                    <p class="text-muted small mb-3">Ustoz, admin yoki o'quvchilar bilan suhbatni boshlang.</p>
+                    <button type="button" class="btn btn-sm btn-primary-custom" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                        <i class="fa-solid fa-plus me-1"></i> Suhbat boshlash
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ===== O'NG PANEL: Faol Suhbat ===== -->
+        <div class="chat-main {% if active_partner %}mobile-active{% endif %}" id="chatMain">
+            {% if active_partner %}
+            <!-- Chat Header -->
+            <div class="chat-main-header">
+                <div class="chat-header-user">
+                    <button class="chat-back-btn" id="chatBackBtn" title="Orqaga">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+
+                    <div class="contact-avatar-wrap" style="width: 44px; height: 44px;">
+                        {% if active_partner.avatar and active_partner.avatar.name %}
+                        <img src="{{ active_partner.avatar.url }}" alt="{{ active_partner_display_name|default:active_partner.full_name }}" class="contact-avatar-img">
+                        {% else %}
+                        <div class="contact-avatar-initials" style="font-size: 1rem;">
+                            {{ active_partner_display_name|default:active_partner.full_name|slice:":1"|upper }}
+                        </div>
+                        {% endif %}
+
+                        <span id="activePartnerDot" class="online-indicator-dot {% if active_partner.is_online %}pulse{% else %}offline-indicator-dot{% endif %}"></span>
+                    </div>
+
+                    <div>
+                        <div class="chat-header-name">
+                            <span id="activePartnerDisplayName">{{ active_partner_display_name|default:active_partner.full_name }}</span>
+                            {% if is_blocked_by_me %}
+                            <span class="badge bg-danger-subtle text-danger ms-2" id="headerBlockedBadge">Bloklangan</span>
+                            {% endif %}
+                            {% if active_partner.role == 'teacher' %}
+                            <span class="contact-badge-role teacher mb-0">Ustoz</span>
+                            {% elif active_partner.role == 'student' %}
+                            <span class="contact-badge-role mb-0">{{ active_partner.classroom.name|default:"O'quvchi" }}</span>
+                            {% endif %}
+                        </div>
+                        <div id="activePartnerStatusText" class="chat-header-status {% if active_partner.is_online %}online{% else %}offline{% endif %}">
+                            {% if active_partner.is_online %}
+                            <i class="fa-solid fa-circle" style="font-size: 0.55rem;"></i> Hozir online
+                            {% else %}
+                            <i class="fa-regular fa-clock"></i> Oxirgi marta: {{ active_partner.get_last_seen_display }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    {% if active_partner.phone %}
+                    <a href="tel:{{ active_partner.phone }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1" title="Qo'ng'iroq qilish">
+                        <i class="fa-solid fa-phone text-success me-1"></i> <span class="d-none d-md-inline">{{ active_partner.phone }}</span>
+                    </a>
+                    {% endif %}
+
+                    <!-- 3 nuqtali qo'shimcha amallar menyusi (Telegram kabi) -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center shadow-none" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 38px; height: 38px; background: rgba(99, 102, 241, 0.1); color: var(--text-primary); border: 1px solid var(--border-color);" title="Qo'shimcha amallar">
+                            <i class="fa-solid fa-ellipsis-vertical fs-6"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2" style="background: var(--bg-card); min-width: 220px; z-index: 1060;">
+                            <li>
+                                <button type="button" class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2" onclick="openEditPartnerNameModal('{{ active_partner.id }}', '{{ active_partner_display_name|default:active_partner.full_name|escapejs }}')">
+                                    <i class="fa-solid fa-user-pen text-primary"></i>
+                                    <span>Kontaktni o'zgartirish</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2" onclick="openClearChatHistoryModal('{{ active_partner.id }}', '{{ active_partner_display_name|default:active_partner.full_name|escapejs }}')">
+                                    <i class="fa-solid fa-broom text-secondary"></i>
+                                    <span>Suhbatni tozalash</span>
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <button type="button" class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 text-danger" onclick="openDeleteConversationModal('{{ active_partner.id }}', '{{ active_partner_display_name|default:active_partner.full_name|escapejs }}')">
+                                    <i class="fa-solid fa-user-xmark"></i>
+                                    <span>Chatni o'chirish</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 {% if is_blocked_by_me %}text-success{% else %}text-danger{% endif %}" id="toggleBlockMenuItem" onclick="toggleBlockUser('{{ active_partner.id }}')">
+                                    <i class="fa-solid {% if is_blocked_by_me %}fa-unlock{% else %}fa-ban{% endif %} me-1" id="toggleBlockIcon"></i>
+                                    <span id="toggleBlockText">{% if is_blocked_by_me %}Blokdan chiqarish{% else %}Foydalanuvchini bloklash{% endif %}</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Xabarlari Oynasi -->
+            <div class="chat-messages-container" id="chatMessagesContainer">
+                <div class="chat-date-divider">
+                    <span class="chat-date-pill">Suhbat boshlanishi</span>
+                </div>
+
+                {% for msg in chat_messages %}
+                <div class="message-bubble-row {% if msg.sender_id == request.user.id %}outgoing{% else %}incoming{% endif %}" data-msg-id="{{ msg.id }}">
+                    <!-- Xabar ustidagi Harakatlar (Telegram kabi) -->
+                    <div class="msg-action-btns">
+                        <button type="button" class="btn-msg-action" title="Uzatish" onclick="openChatForwardModal('{{ msg.id }}')">
+                            <i class="fa-solid fa-share"></i>
+                        </button>
+                        <button type="button" class="btn-msg-action btn-msg-delete" title="O'chirish" onclick="openDeleteMsgModal('{{ msg.id }}', {% if msg.sender_id == request.user.id %}true{% else %}false{% endif %})">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+
+                    <div class="message-bubble">
+                        {% if msg.forwarded_from %}
+                        <div class="msg-forwarded-tag">
+                            <i class="fa-solid fa-share me-1"></i>
+                            <span>Uzatilgan: <strong>{{ msg.forwarded_from.full_name }}</strong></span>
+                        </div>
+                        {% endif %}
+                        {% if msg.shared_post %}
+                        <!-- ULASHILGAN POST KARTASI -->
+                        <div class="shared-bubble-card">
+                            <div class="shared-bubble-header">
+                                <span><i class="fa-solid fa-share-nodes me-1"></i> Ulashilgan post</span>
+                                <span class="fw-bold">{{ msg.shared_post.author.full_name }}</span>
+                            </div>
+                            <div class="shared-post-content-preview">
+                                {{ msg.shared_post.content|truncatechars:140 }}
+                            </div>
+                            {% if msg.shared_post.image and msg.shared_post.image.name %}
+                            <img src="{{ msg.shared_post.image.url }}" class="shared-post-img-thumb" alt="Post rasmi">
+                            {% endif %}
+                            <a href="{% url 'feed' %}" class="shared-link-btn">
+                                <span>Lentada ko'rish</span> <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if msg.shared_grade %}
+                        <!-- ULASHILGAN BAHO KARTASI -->
+                        <div class="shared-bubble-card">
+                            <div class="shared-bubble-header">
+                                <span><i class="fa-solid fa-award me-1"></i> O'quvchi Bahosi</span>
+                                <span>{{ msg.shared_grade.date|date:"d.m.Y" }}</span>
+                            </div>
+                            <div class="shared-grade-box">
+                                <div class="shared-grade-num grade-{{ msg.shared_grade.grade }}">
+                                    {{ msg.shared_grade.grade }}
+                                </div>
+                                <div>
+                                    <strong class="d-block">{{ msg.shared_grade.subject.name }}</strong>
+                                    <small style="opacity:0.85;">{{ msg.shared_grade.comment|default:"Muntazam dars bahosi" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if msg.is_voice and msg.voice_file %}
+                        <!-- OVOZLI XABAR -->
+                        <div class="voice-message-player" data-audio-src="{{ msg.voice_file.url }}">
+                            <button type="button" class="voice-play-btn" onclick="togglePlayVoice(this)">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                            <div class="voice-waveform-wrap">
+                                <div class="voice-bars">
+                                    <span class="voice-bar" style="height: 10px;"></span>
+                                    <span class="voice-bar" style="height: 18px;"></span>
+                                    <span class="voice-bar" style="height: 12px;"></span>
+                                    <span class="voice-bar" style="height: 20px;"></span>
+                                    <span class="voice-bar" style="height: 8px;"></span>
+                                    <span class="voice-bar" style="height: 16px;"></span>
+                                    <span class="voice-bar" style="height: 14px;"></span>
+                                    <span class="voice-bar" style="height: 19px;"></span>
+                                    <span class="voice-bar" style="height: 9px;"></span>
+                                    <span class="voice-bar" style="height: 15px;"></span>
+                                </div>
+                                <span class="voice-duration">{{ msg.formatted_duration }}</span>
+                            </div>
+                        </div>
+                        {% elif msg.is_video and msg.video_file %}
+                        <!-- DUMALOQ VIDEO XABAR (TELEGRAM USLUBIDA) -->
+                        <div class="video-circle-player-wrap">
+                            <div class="video-circle-bubble" onclick="togglePlayVideoNote(this)">
+                                <video src="{{ msg.video_file.url }}" class="video-circle-element" playsinline loop></video>
+                                <div class="video-circle-overlay">
+                                    <i class="fa-solid fa-play video-circle-icon"></i>
+                                </div>
+                            </div>
+                            <div class="video-circle-meta">
+                                <span><i class="fa-solid fa-circle-play text-primary me-1"></i> Dumaloq video</span>
+                            </div>
+                        </div>
+                        {% elif msg.attachment_is_video %}
+                        <video src="{{ msg.attachment.url }}" class="video-file-attachment" controls playsinline preload="metadata"></video>
+                        {% else %}
+                        <!-- MATNLI XABAR -->
+                        <div class="message-text">{{ msg.message }}</div>
+                        {% endif %}
+
+                        <div class="message-meta">
+                            <span>{{ msg.formatted_time }}</span>
+                            {% if msg.sender_id == request.user.id %}
+                            <span class="message-check">
+                                <i class="fa-solid fa-check-double text-light"></i>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5 text-muted" id="noMessagesPlaceholder">
+                    <i class="fa-regular fa-paper-plane fs-1 mb-2 d-block opacity-50 text-primary"></i>
+                    <h6 class="fw-bold mb-1">Muloqotni boshlang!</h6>
+                    <p class="small">Xabar yozing yoki ovozli xabar jo'nating.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Chat Input Maydoni -->
+            <div class="chat-input-area" id="chatInputAreaWrap">
+                <!-- Agar men bloklagan bo'lsam -->
+                <div id="blockedByMeNotice" class="alert alert-warning mb-0 rounded-4 d-flex align-items-center justify-content-between p-3 w-100 {% if not is_blocked_by_me %}d-none{% endif %}" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-ban text-warning fs-5"></i>
+                        <div>
+                            <strong class="d-block text-dark small">Siz bu foydalanuvchini bloklagansiz</strong>
+                            <span class="text-muted" style="font-size: 0.76rem;">Xabar yozish uchun avval blokdan chiqarishingiz kerak</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold rounded-pill px-3 py-1" onclick="toggleBlockUser('{{ active_partner.id }}')">
+                        <i class="fa-solid fa-unlock me-1"></i> Blokdan chiqarish
+                    </button>
+                </div>
+
+                <!-- Agar suhbatdosh meni bloklagan bo'lsa -->
+                <div id="blockedByPartnerNotice" class="alert alert-secondary mb-0 rounded-4 d-flex align-items-center gap-2 p-3 w-100 {% if not is_blocked_by_partner %}d-none{% endif %}" style="background: rgba(100, 116, 139, 0.1); border: 1px solid var(--border-color);">
+                    <i class="fa-solid fa-lock text-muted fs-5"></i>
+                    <div>
+                        <strong class="d-block text-dark small">Siz bloklangansiz</strong>
+                        <span class="text-muted" style="font-size: 0.76rem;">Ushbu foydalanuvchiga xabar yozish imkoniyati cheklangan</span>
+                    </div>
+                </div>
+
+                <!-- Oddiy xabar yuborish formasi -->
+                <form class="chat-input-form {% if is_blocked_by_me or is_blocked_by_partner %}d-none{% endif %}" id="chatInputForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="receiver_id" id="chatReceiverId" value="{{ active_partner.id }}">
+
+                    <!-- Ovoz yozish rejimida ko'rinuvchi panel -->
+                    <div class="voice-recording-overlay" id="voiceRecordingOverlay">
+                        <span class="rec-blinking-dot"></span>
+                        <span class="rec-timer" id="voiceTimer">00:00</span>
+                        <span class="text-muted small">Ovoz yozilmoqda...</span>
+                        <button type="button" class="rec-cancel-btn" id="cancelVoiceBtn">
+                            <i class="fa-solid fa-trash me-1"></i> Bekor qilish
+                        </button>
+                    </div>
+
+                    <!-- Oddiy matn kiritish maydoni -->
+                    <textarea id="chatInputMessage" name="message" class="chat-input-text" rows="1" placeholder="Xabar yozing... (Enter - yuborish)"></textarea>
+
+                    <button type="button" class="chat-action-btn chat-btn-attachment" id="chatVideoUploadBtn" title="Papkadan video tanlab yuborish" aria-label="Papkadan video tanlab yuborish">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </button>
+                    <input type="file" id="chatVideoFileInput" accept="video/*,.3g2,.3gp,.avi,.m2ts,.m2v,.m4v,.mkv,.mov,.mp4,.mpeg,.mpg,.mts,.ogv,.webm" hidden>
+
+                    <!-- Mikrofon tugmasi (Ovozli xabar) -->
+                    <button type="button" class="chat-action-btn chat-btn-voice" id="voiceRecordBtn" title="Ovozli xabar yozish">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+
+                    <!-- Kamera orqali dumaloq video yozish -->
+                    <button type="button" class="chat-action-btn chat-btn-video" id="chatVideoBtn" title="Dumaloq video xabar yozish (Kamera)">
+                        <i class="fa-solid fa-circle-play"></i>
+                    </button>
+                    <span id="chatVideoUploadStatus" class="chat-video-upload-status d-none" role="status" aria-live="polite"></span>
+
+                    <!-- Yuborish tugmasi -->
+                    <button type="submit" class="chat-action-btn chat-send-btn" id="chatSendBtn" title="Yuborish">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <!-- Suhbat tanlanmagan holat -->
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-4">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3"
+                     style="width: 88px; height: 88px; background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                    <i class="fa-solid fa-comments fs-2"></i>
+                </div>
+                <h4 class="fw-bold mb-2">Muloqotni boshlang</h4>
+                <p class="text-muted small mb-4" style="max-width: 380px;">
+                    Suhbatlar ro'yxatidan tanlang yoki o'z ustozingiz/sinfdoshingiz bilan yangi suhbat oching.
+                </p>
+                <button type="button" class="btn btn-primary-custom rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                    <i class="fa-solid fa-plus me-1"></i> Yangi suhbat boshlash
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ===== YANGI SUHBAT OCHISH MODAL OYNASI ===== -->
+<div class="modal fade modal-modern" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header border-bottom border-light-subtle pb-3">
+                <h5 class="modal-title fw-bold" id="newChatModalLabel">
+                    <i class="fa-solid fa-user-plus text-primary me-2"></i> Yangi suhbat boshlash
+                </h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="mb-3">
+                    <input type="text" id="dirSearchInput" class="form-control rounded-pill px-3 py-2 small" placeholder="Ism yoki fan bo'yicha qidirish...">
+                </div>
+
+                <div class="directory-list" id="directoryList">
+                    <div class="text-muted small fw-bold px-2 mb-2 text-uppercase" style="letter-spacing: 0.5px;">
+                        Tegishli kontaktlar ({{ all_directory_users|length }})
+                    </div>
+
+                    {% for u in all_directory_users %}
+                    <a href="{% url 'chat_with_user' u.id %}" class="dir-user-item" data-name="{{ u.full_name|lower }}">
+                        <div class="contact-avatar-wrap" style="width: 42px; height: 42px;">
+                            {% if u.avatar and u.avatar.name %}
+                            <img src="{{ u.avatar.url }}" alt="{{ u.full_name }}" class="contact-avatar-img">
+                            {% else %}
+                            <div class="contact-avatar-initials" style="font-size: 0.95rem;">
+                                {{ u.first_name|default:u.username|slice:":1"|upper }}
+                            </div>
+                            {% endif %}
+                            {% if u.is_online %}
+                            <span class="online-indicator-dot pulse"></span>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="fw-bold small text-truncate">{{ u.full_name }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                {% if u.role == 'teacher' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis">Ustoz{% if u.subject %}: {{ u.subject.name }}{% endif %}</span>
+                                {% elif u.role == 'student' %}
+                                <span class="badge bg-primary-subtle text-primary">{{ u.classroom.name|default:"O'quvchi" }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary">Ma'mur</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="text-primary small">
+                            <i class="fa-solid fa-comment-dots fs-5"></i>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="text-center py-4 text-muted small">
+                        Kontaktlar mavjud emas
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== XABARNI O'CHIRISH MODALI (TELEGRAM USLUBIDA) ===== -->
+<div class="modal fade" id="deleteMsgModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background: var(--bg-card); overflow: hidden;">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 58px; height: 58px; background: rgba(239, 68, 68, 0.12); color: #ef4444;">
+                    <i class="fa-regular fa-trash-can fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-1">Xabarni o'chirish</h6>
+                <p class="text-muted small mb-3">Bu xabarni o'chirib tashlamoqchimisiz?</p>
+                
+                <div id="deleteForEveryoneWrap" class="p-2.5 mb-3 rounded-3 text-start d-flex align-items-center gap-2" style="background: rgba(99, 102, 241, 0.06); border: 1px solid var(--border-color); cursor: pointer;" onclick="document.getElementById('deleteForEveryoneCheck').click();">
+                    <input class="form-check-input mt-0" type="checkbox" id="deleteForEveryoneCheck" style="cursor: pointer;" checked>
+                    <label class="form-check-label small fw-semibold mb-0" for="deleteForEveryoneCheck" style="cursor: pointer;">
+                        <span id="deleteForPartnerLabel">{% if active_partner %}{{ active_partner_display_name|default:active_partner.full_name }}{% else %}Suhbatdosh{% endif %}</span> uchun ham o'chirish
+                    </label>
+                </div>
+                
+                <input type="hidden" id="pendingDeleteMsgId">
+                
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light w-50 rounded-pill py-2 small fw-bold" data-bs-dismiss="modal">Bekor qilish</button>
+                    <button type="button" class="btn btn-danger w-50 rounded-pill py-2 small fw-bold" id="confirmDeleteMsgBtn">O'chirish</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TELEGRAM USLUBIDAGI XABARNI ULASHISH (FORWARD) MODALI ===== -->
+<div class="modal fade" id="chatMsgForwardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable telegram-share-modal">
+        <div class="modal-content">
+            <div class="telegram-modal-header">
+                <div>
+                    <div class="telegram-modal-title"><i class="fa-solid fa-share text-primary me-2"></i> Kimga yuborasiz?</div>
+                    <div class="text-muted" style="font-size: 0.72rem;">Xabarni ulashish uchun bir yoki bir nechta suhbatdoshni tanlang</div>
+                </div>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Qidiruv maydoni -->
+            <div class="telegram-search-wrap">
+                <div class="telegram-search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="chatForwardSearch" placeholder="Ism yoki fan bo'yicha qidirish...">
+                </div>
+            </div>
+
+            <!-- Tezkor Stories Avatarlar qatori -->
+            <div class="telegram-stories-row" id="chatForwardStoriesRow">
+                <!-- JS orqali to'ldiriladi -->
+            </div>
+
+            <!-- Tablar: Barchasi / O'quvchilar / Ustozlar -->
+            <div class="telegram-tabs-row">
+                <button type="button" class="telegram-tab-btn active" data-tab="all" onclick="filterChatForwardTab('all')">Barchasi</button>
+                <button type="button" class="telegram-tab-btn" data-tab="teacher" onclick="filterChatForwardTab('teacher')">Ustozlar</button>
+                <button type="button" class="telegram-tab-btn" data-tab="student" onclick="filterChatForwardTab('student')">O'quvchilar</button>
+            </div>
+
+            <!-- Kontaktlar ro'yxati -->
+            <div class="telegram-modal-body">
+                <div class="telegram-contacts-list" id="chatForwardContactsList">
+                    <div class="text-center py-4 text-muted small">
+                        <i class="fa-solid fa-circle-notch fa-spin me-2"></i> Kontaktlar yuklanmoqda...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pastki panel: Izoh + Jo'natish tugmasi -->
+            <div class="telegram-modal-footer">
+                <input type="hidden" id="chatForwardPendingMsgId">
+                <div class="telegram-comment-input-wrap">
+                    <input type="text" id="chatForwardComment" placeholder="Izoh qo'shish (ixtiyoriy)...">
+                </div>
+                <button type="button" class="telegram-send-btn disabled" id="chatForwardSubmitBtn" disabled>
+                    <span>Jo'natish</span>
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== KONTAKT ISMINI O'ZGARTIRISH MODALI ===== -->
+<div class="modal fade" id="editPartnerNameModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background: var(--bg-card);">
+            <div class="modal-header border-bottom border-light-subtle pb-3">
+                <h6 class="modal-title fw-bold">
+                    <i class="fa-solid fa-user-pen text-primary me-2"></i> Kontakt ismini tahrirlash
+                </h6>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <p class="text-muted small mb-2">Foydalanuvchi uchun chatda ko'rinadigan taxallus kiriting:</p>
+                <input type="text" id="editPartnerNameInput" class="form-control rounded-pill px-3 py-2 small mb-3" placeholder="Yangi ism...">
+                <input type="hidden" id="editPartnerTargetId">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light w-50 rounded-pill py-2 small fw-bold" data-bs-dismiss="modal">Bekor qilish</button>
+                    <button type="button" class="btn btn-primary w-50 rounded-pill py-2 small fw-bold" id="confirmEditPartnerNameBtn">Saqlash</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== SUHBATNI TOZALASH MODALI ===== -->
+<div class="modal fade" id="clearChatHistoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background: var(--bg-card); overflow: hidden;">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 58px; height: 58px; background: rgba(239, 68, 68, 0.12); color: #ef4444;">
+                    <i class="fa-solid fa-broom fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-1">Suhbatni tozalash</h6>
+                <p class="text-muted small mb-3">Suhbatdagi barcha xabarlar o'chirib tashlanadi.</p>
+
+                <div class="p-2.5 mb-3 rounded-3 text-start d-flex align-items-center gap-2" style="background: rgba(99, 102, 241, 0.06); border: 1px solid var(--border-color); cursor: pointer;" onclick="document.getElementById('clearForEveryoneCheck').click();">
+                    <input class="form-check-input mt-0" type="checkbox" id="clearForEveryoneCheck" style="cursor: pointer;" checked>
+                    <label class="form-check-label small fw-semibold mb-0" for="clearForEveryoneCheck" style="cursor: pointer;">
+                        <span id="clearForPartnerNameLabel">{% if active_partner %}{{ active_partner_display_name|default:active_partner.full_name }}{% else %}Suhbatdosh{% endif %}</span> uchun ham tozalash
+                    </label>
+                </div>
+
+                <input type="hidden" id="clearChatTargetId">
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light w-50 rounded-pill py-2 small fw-bold" data-bs-dismiss="modal">Bekor qilish</button>
+                    <button type="button" class="btn btn-danger w-50 rounded-pill py-2 small fw-bold" id="confirmClearChatBtn">Tozalash</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CHATNI RO'YXATDAN O'CHIRISH MODALI ===== -->
+<div class="modal fade" id="deleteConversationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background: var(--bg-card); overflow: hidden;">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 58px; height: 58px; background: rgba(239, 68, 68, 0.12); color: #ef4444;">
+                    <i class="fa-solid fa-user-xmark fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-1">Chatni o'chirish</h6>
+                <p class="text-muted small mb-3">Ushbu foydalanuvchi bilan butun suhbat chatlar ro'yxatidan butunlay o'chirib tashlanadi.</p>
+                <input type="hidden" id="deleteConvTargetId">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light w-50 rounded-pill py-2 small fw-bold" data-bs-dismiss="modal">Bekor qilish</button>
+                    <button type="button" class="btn btn-danger w-50 rounded-pill py-2 small fw-bold" id="confirmDeleteConvBtn">O'chirish</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DUMALOQ VIDEO YOZISH MODALI (YANGI) ===== -->
+<div class="modal fade" id="videoCircleRecordModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content border-0 text-white text-center" style="border-radius:24px; background:linear-gradient(160deg,#0f1729 0%,#1a2442 100%); border:1px solid rgba(99,102,241,0.25); box-shadow:0 32px 80px rgba(0,0,0,0.6);">
+
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0 px-4 pt-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-danger d-none" id="videoRecLiveBadge" style="font-size:0.7rem; letter-spacing:0.08em;">
+                        <i class="fa-solid fa-circle fa-beat me-1" style="font-size:0.5rem;"></i> REC
+                    </span>
+                    <span class="fw-bold" id="videoRecTimer" style="font-size:1rem; font-variant-numeric:tabular-nums; color:rgba(255,255,255,0.7);">00:00</span>
+                </div>
+                <button type="button" id="cancelVideoRecordBtn" class="btn btn-sm" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:50%; width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="modal-body px-4 pb-4 pt-3 d-flex flex-column align-items-center gap-3">
+
+                <!-- Xato banneri -->
+                <div class="alert alert-danger border-0 small py-2 px-3 w-100 rounded-3 text-start d-none" id="cameraErrorBanner" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <span id="cameraErrorMsg">Kamera xatoligi yuz berdi.</span>
+                </div>
+
+                <!-- Dumaloq kamera oynasi -->
+                <div id="videoCircleFrame" style="position:relative; width:260px; height:260px; border-radius:50%; overflow:hidden; background:#000; border:4px solid #6366f1; box-shadow:0 0 40px rgba(99,102,241,0.45); flex-shrink:0;">
+                    <video id="cameraVideoLive" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover; transform:scaleX(-1);"></video>
+                    <!-- Yozish halqasi animatsiyasi -->
+                    <div id="videoCircleRing" style="display:none; position:absolute; inset:-8px; border-radius:50%; border:3px solid rgba(239,68,68,0.85); animation:vcRingPulse 1.2s ease infinite;"></div>
+                </div>
+
+                <!-- Maslahat matni -->
+                <p class="mb-0 small" id="videoRecTip" style="color:rgba(255,255,255,0.55);">Kamera tayyor. Yozishni boshlash uchun tugmani bosing.</p>
+
+                <!-- Tugmalar -->
+                <div class="d-flex align-items-center justify-content-center gap-4 mt-1">
+                    <!-- Bekor qilish -->
+                    <div class="text-center">
+                        <button type="button" id="cancelVideoRecordBtn2" class="btn" style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.2); color:#fff; font-size:1.1rem; display:flex; align-items:center; justify-content:center; margin:0 auto;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <small style="color:rgba(255,255,255,0.4); font-size:0.68rem;">Bekor</small>
+                    </div>
+
+                    <!-- Asosiy tugma: Boshlash / To'xtatib yuborish -->
+                    <div class="text-center">
+                        <button type="button" id="toggleVideoRecordBtn" style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#ef4444,#dc2626); border:none; color:#fff; font-size:1.7rem; display:flex; align-items:center; justify-content:center; margin:0 auto; box-shadow:0 8px 24px rgba(239,68,68,0.5); transition:all 0.2s;">
+                            <i class="fa-solid fa-video" id="toggleVideoRecordIcon"></i>
+                        </button>
+                        <small id="toggleVideoRecordLabel" style="color:rgba(255,255,255,0.45); font-size:0.68rem;">Yozish</small>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes vcRingPulse {
+    0%   { transform: scale(0.97); opacity: 0.85; }
+    50%  { transform: scale(1.04); opacity: 0.4; }
+    100% { transform: scale(0.97); opacity: 0.85; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var activePartnerId = "{{ active_partner.id|default:'' }}";
+    var messagesContainer = document.getElementById('chatMessagesContainer');
+    var inputForm = document.getElementById('chatInputForm');
+    var inputMessage = document.getElementById('chatInputMessage');
+    var contactSearchInput = document.getElementById('contactSearchInput');
+    var dirSearchInput = document.getElementById('dirSearchInput');
+    var chatBackBtn = document.getElementById('chatBackBtn');
+    var chatMain = document.getElementById('chatMain');
+
+    // Voice recording elements
+    var voiceRecordBtn = document.getElementById('voiceRecordBtn');
+    var voiceRecordingOverlay = document.getElementById('voiceRecordingOverlay');
+    var voiceTimer = document.getElementById('voiceTimer');
+    var cancelVoiceBtn = document.getElementById('cancelVoiceBtn');
+
+    var mediaRecorder = null;
+    var audioChunks = [];
+    var recordingInterval = null;
+    var recordingSeconds = 0;
+    var currentAudio = null;
+
+    function scrollToBottom() {
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+    scrollToBottom();
+
+    // Mobil orqaga qaytish
+    if (chatBackBtn && chatMain) {
+        chatBackBtn.addEventListener('click', function () {
+            chatMain.classList.remove('mobile-active');
+        });
+    }
+
+    // Suhbatlarni qidirish
+    if (contactSearchInput) {
+        contactSearchInput.addEventListener('input', function () {
+            var q = this.value.toLowerCase().trim();
+            document.querySelectorAll('#chatContactsList .contact-item').forEach(function (item) {
+                var name = item.getAttribute('data-name') || '';
+                item.style.display = (!q || name.includes(q)) ? 'flex' : 'none';
+            });
+        });
+    }
+
+    // Modal kontaktlarini qidirish
+    if (dirSearchInput) {
+        dirSearchInput.addEventListener('input', function () {
+            var q = this.value.toLowerCase().trim();
+            document.querySelectorAll('#directoryList .dir-user-item').forEach(function (item) {
+                var name = item.getAttribute('data-name') || '';
+                item.style.display = (!q || name.includes(q)) ? 'flex' : 'none';
+            });
+        });
+    }
+
+    // Enter bilan yuborish
+    if (inputMessage && inputForm) {
+        inputMessage.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                inputForm.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        });
+    }
+
+    // Ovoz yozish (MediaRecorder)
+    if (voiceRecordBtn) {
+        voiceRecordBtn.addEventListener('click', function () {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                // To'xtatish va yuborish
+                mediaRecorder.stop();
+            } else {
+                startRecording();
+            }
+        });
+    }
+
+    if (cancelVoiceBtn) {
+        cancelVoiceBtn.addEventListener('click', function () {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                audioChunks = [];
+                mediaRecorder.stop();
+                resetRecordingUI();
+            }
+        });
+    }
+
+    function startRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("Brauzeringiz ovoz yozishni qo'llab-quvvatlamaydi!");
+            return;
+        }
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function (stream) {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = function (e) {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = function () {
+                    stream.getTracks().forEach(function (track) { track.stop(); });
+                    clearInterval(recordingInterval);
+
+                    if (audioChunks.length > 0 && recordingSeconds > 0) {
+                        var audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        sendVoiceMessage(audioBlob, recordingSeconds);
+                    }
+                    resetRecordingUI();
+                };
+
+                mediaRecorder.start();
+                recordingSeconds = 0;
+                voiceTimer.textContent = '00:00';
+                voiceRecordingOverlay.classList.add('active');
+                voiceRecordBtn.classList.add('recording');
+                if (inputMessage) inputMessage.style.display = 'none';
+
+                recordingInterval = setInterval(function () {
+                    recordingSeconds++;
+                    var mins = Math.floor(recordingSeconds / 60);
+                    var secs = recordingSeconds % 60;
+                    voiceTimer.textContent = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+                }, 1000);
+            })
+            .catch(function (err) {
+                alert("Mikrofondan foydalanishga ruxsat berilmadi: " + err.message);
+            });
+    }
+
+    function resetRecordingUI() {
+        clearInterval(recordingInterval);
+        voiceRecordingOverlay.classList.remove('active');
+        voiceRecordBtn.classList.remove('recording');
+        if (inputMessage) inputMessage.style.display = 'block';
+    }
+
+    function sendVoiceMessage(audioBlob, duration) {
+        if (!activePartnerId) return;
+
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        var formData = new FormData();
+        formData.append('receiver_id', activePartnerId);
+        formData.append('voice_file', audioBlob, 'voice_' + Date.now() + '.webm');
+        formData.append('voice_duration', duration);
+
+        var placeholder = document.getElementById('noMessagesPlaceholder');
+        if (placeholder) placeholder.remove();
+
+        fetch("{% url 'chat_send_message' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (data.status === 'success') {
+                appendMessageBubble(data.message, true);
+                scrollToBottom();
+            }
+        });
+    }
+
+    // Matnli xabar yuborish
+    if (inputForm) {
+        inputForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var text = inputMessage.value.trim();
+            if (!text || !activePartnerId) return;
+
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            var formData = new FormData();
+            formData.append('receiver_id', activePartnerId);
+            formData.append('message', text);
+
+            inputMessage.value = '';
+
+            var placeholder = document.getElementById('noMessagesPlaceholder');
+            if (placeholder) placeholder.remove();
+
+            fetch("{% url 'chat_send_message' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.status === 'success') {
+                    appendMessageBubble(data.message, true);
+                    scrollToBottom();
+                }
+            });
+        });
+    }
+
+    function appendMessageBubble(msg, isMe) {
+        if (document.querySelector('[data-msg-id="' + msg.id + '"]')) return;
+
+        var row = document.createElement('div');
+        row.className = 'message-bubble-row ' + (isMe ? 'outgoing' : 'incoming');
+        row.setAttribute('data-msg-id', msg.id);
+
+        var actionsHTML = '<div class="msg-action-btns">' +
+                          '<button type="button" class="btn-msg-action" title="Uzatish" onclick="openChatForwardModal(' + msg.id + ')"><i class="fa-solid fa-share"></i></button>' +
+                          '<button type="button" class="btn-msg-action btn-msg-delete" title="O\'chirish" onclick="openDeleteMsgModal(' + msg.id + ', ' + (isMe ? 'true' : 'false') + ')"><i class="fa-regular fa-trash-can"></i></button>' +
+                          '</div>';
+
+        var innerHTML = actionsHTML + '<div class="message-bubble">';
+
+        if (msg.forwarded_from_name) {
+            innerHTML += '<div class="msg-forwarded-tag">' +
+                         '<i class="fa-solid fa-share me-1"></i>' +
+                         '<span>Uzatilgan: <strong>' + escapeHtml(msg.forwarded_from_name) + '</strong></span>' +
+                         '</div>';
+        }
+
+        if (msg.shared_post) {
+            innerHTML += '<div class="shared-bubble-card">' +
+                         '<div class="shared-bubble-header">' +
+                         '<span><i class="fa-solid fa-share-nodes me-1"></i> Ulashilgan post</span>' +
+                         '<span class="fw-bold">' + escapeHtml(msg.shared_post.author_name) + '</span>' +
+                         '</div>' +
+                         '<div class="shared-post-content-preview">' + escapeHtml(msg.shared_post.content) + '</div>';
+            if (msg.shared_post.image_url) {
+                innerHTML += '<img src="' + msg.shared_post.image_url + '" class="shared-post-img-thumb" alt="Post rasmi">';
+            }
+            innerHTML += '<a href="/feed/" class="shared-link-btn"><span>Lentada ko\'rish</span> <i class="fa-solid fa-arrow-up-right-from-square"></i></a>' +
+                         '</div>';
+        }
+
+        if (msg.shared_grade) {
+            var gradeClass = 'grade-' + msg.shared_grade.grade;
+            innerHTML += '<div class="shared-bubble-card">' +
+                         '<div class="shared-bubble-header">' +
+                         '<span><i class="fa-solid fa-award me-1"></i> O\'quvchi Bahosi</span>' +
+                         '<span>' + escapeHtml(msg.shared_grade.date) + '</span>' +
+                         '</div>' +
+                         '<div class="shared-grade-box">' +
+                         '<div class="shared-grade-num ' + gradeClass + '">' + msg.shared_grade.grade + '</div>' +
+                         '<div>' +
+                         '<strong class="d-block">' + escapeHtml(msg.shared_grade.subject_name) + '</strong>' +
+                         '<small style="opacity:0.85;">' + escapeHtml(msg.shared_grade.comment || 'Muntazam dars bahosi') + '</small>' +
+                         '</div></div></div>';
+        }
+
+        if (msg.is_voice && msg.voice_url) {
+            innerHTML += '<div class="voice-message-player" data-audio-src="' + msg.voice_url + '">' +
+                         '<button type="button" class="voice-play-btn" onclick="togglePlayVoice(this)">' +
+                         '<i class="fa-solid fa-play"></i>' +
+                         '</button>' +
+                         '<div class="voice-waveform-wrap">' +
+                         '<div class="voice-bars">' +
+                         '<span class="voice-bar" style="height: 10px;"></span>' +
+                         '<span class="voice-bar" style="height: 18px;"></span>' +
+                         '<span class="voice-bar" style="height: 12px;"></span>' +
+                         '<span class="voice-bar" style="height: 20px;"></span>' +
+                         '<span class="voice-bar" style="height: 8px;"></span>' +
+                         '<span class="voice-bar" style="height: 16px;"></span>' +
+                         '</div>' +
+                         '<span class="voice-duration">' + (msg.formatted_duration || '00:00') + '</span>' +
+                         '</div></div>';
+        } else if (msg.is_video && msg.video_url) {
+            innerHTML += '<div class="video-circle-player-wrap">' +
+                         '<div class="video-circle-bubble" onclick="togglePlayVideoNote(this)">' +
+                         '<video src="' + msg.video_url + '" class="video-circle-element" playsinline loop></video>' +
+                         '<div class="video-circle-overlay"><i class="fa-solid fa-play video-circle-icon"></i></div>' +
+                         '</div>' +
+                         '<div class="video-circle-meta"><span><i class="fa-solid fa-circle-play text-primary me-1"></i> Dumaloq video</span></div>' +
+                         '</div>';
+        } else if (msg.attachment_is_video && msg.attachment_url) {
+            innerHTML += '<video src="' + msg.attachment_url + '" class="video-file-attachment" controls playsinline preload="metadata"></video>';
+        } else {
+            innerHTML += '<div class="message-text">' + escapeHtml(msg.message) + '</div>';
+        }
+
+        innerHTML += '<div class="message-meta">' +
+                     '<span>' + msg.time + '</span>';
+        if (isMe) {
+            innerHTML += '<span class="message-check"><i class="fa-solid fa-check-double text-light"></i></span>';
+        }
+        innerHTML += '</div></div>';
+
+        row.innerHTML = innerHTML;
+        messagesContainer.appendChild(row);
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    // Real-time yangi xabarlar, Online status va O'chirishlarni sinxronlash
+    function checkPartnerMessages() {
+        if (!activePartnerId) return;
+
+        var allBubbles = document.querySelectorAll('.message-bubble-row[data-msg-id]');
+        var lastId = 0;
+        if (allBubbles.length > 0) {
+            var lastBubble = allBubbles[allBubbles.length - 1];
+            lastId = parseInt(lastBubble.getAttribute('data-msg-id') || 0);
+        }
+
+        fetch("/chat/api/messages/" + activePartnerId + "/?last_id=" + lastId)
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.status === 'success') {
+                    var statusText = document.getElementById('activePartnerStatusText');
+                    var dot = document.getElementById('activePartnerDot');
+
+                    if (data.partner_is_online) {
+                        if (statusText) {
+                            statusText.className = 'chat-header-status online';
+                            statusText.innerHTML = '<i class="fa-solid fa-circle" style="font-size: 0.55rem;"></i> Hozir online';
+                        }
+                        if (dot) dot.className = 'online-indicator-dot pulse';
+                    } else {
+                        if (statusText) {
+                            statusText.className = 'chat-header-status offline';
+                            statusText.innerHTML = '<i class="fa-regular fa-clock"></i> Oxirgi marta: ' + data.partner_last_seen;
+                        }
+                        if (dot) dot.className = 'offline-indicator-dot';
+                    }
+
+                    // Suhbatdosh ikkala tomondan o'chirgan xabarlarni o'chirish
+                    if (data.deleted_ids && data.deleted_ids.length > 0) {
+                        data.deleted_ids.forEach(function (did) {
+                            var b = document.querySelector('.message-bubble-row[data-msg-id="' + did + '"]');
+                            if (b) b.remove();
+                        });
+                    }
+
+                    if (data.messages && data.messages.length > 0) {
+                        var hasNew = false;
+                        data.messages.forEach(function (m) {
+                            if (!document.querySelector('[data-msg-id="' + m.id + '"]')) {
+                                appendMessageBubble(m, m.is_me);
+                                hasNew = true;
+                            }
+                        });
+                        if (hasNew) scrollToBottom();
+                    }
+                }
+            })
+            .catch(function () {});
+    }
+
+    if (activePartnerId) {
+        setInterval(checkPartnerMessages, 2500);
+    }
+
+    // ==========================================
+    // XABARNI O'CHIRISH (DELETE) MANTIQI
+    // ==========================================
+    window.openDeleteMsgModal = function (msgId, isSender) {
+        document.getElementById('pendingDeleteMsgId').value = msgId;
+        var wrap = document.getElementById('deleteForEveryoneWrap');
+        var check = document.getElementById('deleteForEveryoneCheck');
+        if (isSender) {
+            wrap.style.display = 'flex';
+            check.checked = true;
+        } else {
+            wrap.style.display = 'none';
+            check.checked = false;
+        }
+        var modalEl = document.getElementById('deleteMsgModal');
+        var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    };
+
+    var confirmDeleteBtn = document.getElementById('confirmDeleteMsgBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function () {
+            var msgId = document.getElementById('pendingDeleteMsgId').value;
+            if (!msgId) return;
+            var deleteForEveryone = document.getElementById('deleteForEveryoneCheck').checked;
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            var formData = new FormData();
+            formData.append('delete_for_everyone', deleteForEveryone ? 'true' : 'false');
+
+            fetch('/chat/api/message/' + msgId + '/delete/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.status === 'success') {
+                    var bubble = document.querySelector('.message-bubble-row[data-msg-id="' + msgId + '"]');
+                    if (bubble) {
+                        bubble.style.transition = 'all 0.25s ease';
+                        bubble.style.opacity = '0';
+                        bubble.style.transform = 'scale(0.9)';
+                        setTimeout(function () { bubble.remove(); }, 250);
+                    }
+                    var modalEl = document.getElementById('deleteMsgModal');
+                    var modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                } else {
+                    alert(data.message || "Xatolik yuz berdi");
+                }
+            });
+        });
+    }
+
+    // ==========================================
+    // TELEGRAM USLUBIDA XABARNI ULASHISH (FORWARD)
+    // ==========================================
+    var chatForwardContacts = [];
+    var selectedForwardIds = new Set();
+    var currentForwardTab = 'all';
+
+    window.openChatForwardModal = function (msgId) {
+        document.getElementById('chatForwardPendingMsgId').value = msgId;
+        document.getElementById('chatForwardComment').value = '';
+        selectedForwardIds.clear();
+        updateForwardSubmitButton();
+
+        var modalEl = document.getElementById('chatMsgForwardModal');
+        var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+
+        if (chatForwardContacts.length === 0) {
+            fetch('/chat/api/share-contacts/')
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (data.status === 'success') {
+                        chatForwardContacts = data.contacts || [];
+                        renderChatForwardContacts();
+                    }
+                })
+                .catch(function () {
+                    var list = document.getElementById('chatForwardContactsList');
+                    if (list) list.innerHTML = '<div class="text-center py-4 text-danger small">Kontaktlarni yuklashda xatolik</div>';
+                });
+        } else {
+            renderChatForwardContacts();
+        }
+    };
+
+    function renderChatForwardContacts() {
+        var storiesRow = document.getElementById('chatForwardStoriesRow');
+        var contactsList = document.getElementById('chatForwardContactsList');
+        var q = (document.getElementById('chatForwardSearch').value || '').toLowerCase().trim();
+
+        var filtered = chatForwardContacts.filter(function (c) {
+            var matchTab = (currentForwardTab === 'all') || (c.role_type === currentForwardTab);
+            var matchQuery = !q || c.name.toLowerCase().includes(q) || c.role.toLowerCase().includes(q);
+            return matchTab && matchQuery;
+        });
+
+        // 1. Stories Row
+        if (storiesRow) {
+            var storiesHTML = '';
+            chatForwardContacts.slice(0, 10).forEach(function (c) {
+                var isSelected = selectedForwardIds.has(c.id);
+                storiesHTML += '<div class="telegram-story-item ' + (isSelected ? 'selected' : '') + '" onclick="toggleForwardContact(' + c.id + ')">' +
+                               '<div class="telegram-story-avatar-wrap">' +
+                               (c.avatar ? '<img src="' + c.avatar + '" class="telegram-story-avatar" alt="' + escapeHtml(c.first_name) + '">' :
+                               '<div class="telegram-story-avatar telegram-story-avatar-placeholder">' + escapeHtml(c.initial) + '</div>') +
+                               (c.is_online ? '<span class="telegram-online-badge"></span>' : '') +
+                               (isSelected ? '<div class="telegram-story-check"><i class="fa-solid fa-check"></i></div>' : '') +
+                               '</div>' +
+                               '<span class="telegram-story-name">' + escapeHtml(c.first_name) + '</span>' +
+                               '</div>';
+            });
+            storiesRow.innerHTML = storiesHTML;
+        }
+
+        // 2. Contacts List
+        if (contactsList) {
+            if (filtered.length === 0) {
+                contactsList.innerHTML = '<div class="text-center py-4 text-muted small">Kontaktlar topilmadi</div>';
+                return;
+            }
+
+            var listHTML = '';
+            filtered.forEach(function (c) {
+                var isSelected = selectedForwardIds.has(c.id);
+                listHTML += '<div class="telegram-contact-row ' + (isSelected ? 'selected' : '') + '" onclick="toggleForwardContact(' + c.id + ')">' +
+                            '<div class="contact-avatar-wrap" style="width: 44px; height: 44px; flex-shrink: 0;">' +
+                            (c.avatar ? '<img src="' + c.avatar + '" class="contact-avatar-img" alt="' + escapeHtml(c.name) + '">' :
+                            '<div class="contact-avatar-initials" style="font-size: 1rem;">' + escapeHtml(c.initial) + '</div>') +
+                            (c.is_online ? '<span class="online-indicator-dot pulse"></span>' : '') +
+                            '</div>' +
+                            '<div class="telegram-contact-info">' +
+                            '<div class="telegram-contact-name">' + escapeHtml(c.name) + '</div>' +
+                            '<div class="telegram-contact-role">' +
+                            (c.role_type === 'teacher' ? '<span class="badge bg-warning-subtle text-warning-emphasis me-1">Ustoz</span>' : '<span class="badge bg-primary-subtle text-primary me-1">O\'quvchi</span>') +
+                            escapeHtml(c.role) +
+                            '</div>' +
+                            '</div>' +
+                            '<div class="telegram-checkbox ' + (isSelected ? 'checked' : '') + '">' +
+                            '<i class="fa-solid fa-check"></i>' +
+                            '</div>' +
+                            '</div>';
+            });
+            contactsList.innerHTML = listHTML;
+        }
+    }
+
+    window.toggleForwardContact = function (id) {
+        if (selectedForwardIds.has(id)) {
+            selectedForwardIds.delete(id);
+        } else {
+            selectedForwardIds.add(id);
+        }
+        renderChatForwardContacts();
+        updateForwardSubmitButton();
+    };
+
+    window.filterChatForwardTab = function (tab) {
+        currentForwardTab = tab;
+        document.querySelectorAll('#chatMsgForwardModal .telegram-tab-btn').forEach(function (btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+        });
+        renderChatForwardContacts();
+    };
+
+    var forwardSearch = document.getElementById('chatForwardSearch');
+    if (forwardSearch) {
+        forwardSearch.addEventListener('input', renderChatForwardContacts);
+    }
+
+    function updateForwardSubmitButton() {
+        var btn = document.getElementById('chatForwardSubmitBtn');
+        if (!btn) return;
+        var count = selectedForwardIds.size;
+        if (count > 0) {
+            btn.classList.remove('disabled');
+            btn.removeAttribute('disabled');
+            btn.innerHTML = '<span>Jo\'natish (' + count + ')</span> <i class="fa-solid fa-paper-plane ms-1"></i>';
+        } else {
+            btn.classList.add('disabled');
+            btn.setAttribute('disabled', 'disabled');
+            btn.innerHTML = '<span>Jo\'natish</span> <i class="fa-solid fa-paper-plane ms-1"></i>';
+        }
+    }
+
+    var forwardSubmitBtn = document.getElementById('chatForwardSubmitBtn');
+    if (forwardSubmitBtn) {
+        forwardSubmitBtn.addEventListener('click', function () {
+            var msgId = document.getElementById('chatForwardPendingMsgId').value;
+            if (!msgId || selectedForwardIds.size === 0) return;
+
+            var comment = document.getElementById('chatForwardComment').value.trim();
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            var formData = new FormData();
+            formData.append('receiver_ids', Array.from(selectedForwardIds).join(','));
+            if (comment) formData.append('comment', comment);
+
+            forwardSubmitBtn.disabled = true;
+            forwardSubmitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Jo\'natilmoqda...';
+
+            fetch('/chat/api/message/' + msgId + '/forward/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                forwardSubmitBtn.disabled = false;
+                if (data.status === 'success') {
+                    var modalEl = document.getElementById('chatMsgForwardModal');
+                    var modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
+                    // Muvaffaqiyat xabari
+                    alert(data.message || "Xabar muvaffaqiyatli uzatildi!");
+                } else {
+                    alert(data.message || "Uzatishda xatolik yuz berdi");
+                    updateForwardSubmitButton();
+                }
+            })
+            .catch(function () {
+                forwardSubmitBtn.disabled = false;
+                updateForwardSubmitButton();
+                alert("Serverga ulanishda xatolik yuz berdi");
+            });
+        });
+    }
+
+    // ==========================================
+    // DUMALOQ VIDEO XABAR (TELEGRAM USLUBIDA KAMERA ORQALI YOZISH)
+    // ==========================================
+    var chatVideoBtn = document.getElementById('chatVideoBtn');
+    var cameraStream = null;
+    var videoMediaRecorder = null;
+    var videoChunks = [];
+    var videoRecInterval = null;
+    var videoRecSeconds = 0;
+    var cameraStarting = false;
+    var cameraRequestId = 0;
+    var recordWhenCameraReady = false;
+    var videoRecordingCancelled = false;
+
+    var videoCircleModalEl = document.getElementById('videoCircleRecordModal');
+    var videoCircleModal = videoCircleModalEl ? (bootstrap.Modal.getInstance(videoCircleModalEl) || new bootstrap.Modal(videoCircleModalEl)) : null;
+
+    if (chatVideoBtn && videoCircleModal) {
+        chatVideoBtn.addEventListener('click', function () {
+            if (!activePartnerId) {
+                alert("Iltimos, avval suhbatdoshni tanlang!");
+                return;
+            }
+            recordWhenCameraReady = true;
+            videoCircleModal.show();
+            startLiveCamera();
+        });
+    }
+
+    if (videoCircleModalEl) {
+        videoCircleModalEl.addEventListener('hidden.bs.modal', function () {
+            if (videoMediaRecorder && videoMediaRecorder.state === 'recording') {
+                videoRecordingCancelled = true;
+                videoChunks = [];
+                videoMediaRecorder.stop();
+            }
+            stopLiveCamera();
+        });
+    }
+
+    var cancelVideoRecordBtn = document.getElementById('cancelVideoRecordBtn');
+    if (cancelVideoRecordBtn) {
+        cancelVideoRecordBtn.addEventListener('click', function () {
+            if (videoMediaRecorder && videoMediaRecorder.state === 'recording') {
+                videoRecordingCancelled = true;
+                videoChunks = [];
+                videoMediaRecorder.stop();
+            }
+            if (videoCircleModal) videoCircleModal.hide();
+        });
+    }
+
+    function startLiveCamera() {
+        if (cameraStarting) return;
+        if (cameraStream) {
+            if (recordWhenCameraReady) {
+                recordWhenCameraReady = false;
+                beginVideoRecording();
+            }
+            return;
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showCameraError("Brauzer kameraga kira olmayapti. Kamera yozuvi uchun HTTPS yoki localhost kerak; tayyor videoni fayldan yuborishingiz mumkin.");
+            return;
+        }
+        if (!window.MediaRecorder) {
+            showCameraError("Brauzeringizda video yozish qo'llab-quvvatlanmaydi. Tayyor videoni fayldan yuborishingiz mumkin.");
+            return;
+        }
+
+        var constraints = {
+            video: {
+                facingMode: { ideal: 'user' },
+                width: { ideal: 480 },
+                height: { ideal: 480 }
+            },
+            audio: true
+        };
+
+        cameraStarting = true;
+        var requestId = ++cameraRequestId;
+        function attachCameraStream(stream) {
+            if (requestId !== cameraRequestId) {
+                stream.getTracks().forEach(function (track) { track.stop(); });
+                return;
+            }
+            cameraStarting = false;
+            cameraStream = stream;
+            if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+            var videoLive = document.getElementById('cameraVideoLive');
+            if (videoLive) {
+                videoLive.srcObject = stream;
+                videoLive.play().catch(function () {});
+            }
+            var errorBanner = document.getElementById('cameraErrorBanner');
+            if (errorBanner) errorBanner.classList.add('d-none');
+            resetVideoRecUI();
+            if (recordWhenCameraReady) {
+                recordWhenCameraReady = false;
+                beginVideoRecording();
+            }
+        }
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(attachCameraStream)
+            .catch(function (err) {
+                if (requestId !== cameraRequestId) return;
+                if (constraints.audio) {
+                    constraints.audio = false;
+                    navigator.mediaDevices.getUserMedia(constraints)
+                        .then(attachCameraStream)
+                        .catch(function (cameraError) {
+                            if (requestId !== cameraRequestId) return;
+                            cameraStarting = false;
+                            if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+                            showCameraError("Kameraga ruxsat berilmadi yoki kamera ishlamayapti. " + cameraError.message + " Kamera ruxsati va HTTPS/localhost manzilini tekshiring.");
+                        });
+                    return;
+                }
+                cameraStarting = false;
+                if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+                showCameraError("Kameraga ruxsat berilmadi yoki kamera ishlamayapti. " + err.message + " Kamera ruxsati va HTTPS/localhost manzilini tekshiring.");
+            });
+    }
+
+    function showCameraError(message) {
+        var banner = document.getElementById('cameraErrorBanner');
+        var messageEl = document.getElementById('cameraErrorMsg');
+        if (messageEl) messageEl.textContent = message;
+        if (banner) banner.classList.remove('d-none');
+    }
+
+    function stopLiveCamera() {
+        cameraRequestId++;
+        cameraStarting = false;
+        recordWhenCameraReady = false;
+        if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(function (track) { track.stop(); });
+            cameraStream = null;
+        }
+        var videoLive = document.getElementById('cameraVideoLive');
+        if (videoLive) videoLive.srcObject = null;
+        if (videoRecInterval) {
+            clearInterval(videoRecInterval);
+            videoRecInterval = null;
+        }
+        resetVideoRecUI();
+    }
+
+    function resetVideoRecUI() {
+        var frame = document.getElementById('videoCircleFrame');
+        if (frame) frame.classList.remove('recording');
+        var liveBadge = document.getElementById('videoRecLiveBadge');
+        if (liveBadge) liveBadge.classList.add('d-none');
+        var timer = document.getElementById('videoRecTimer');
+        if (timer) timer.textContent = '00:00';
+        var icon = document.getElementById('toggleVideoRecordIcon');
+        if (icon) icon.className = 'fa-solid fa-video';
+        var tip = document.getElementById('videoRecTip');
+        if (tip) tip.textContent = "Kamerani ochib, yozuvni boshlash uchun yashil tugmani bosing";
+        videoRecSeconds = 0;
+    }
+
+    // Video yozishni boshlash / to'xtatib yuborish
+    var toggleVideoRecordBtn = document.getElementById('toggleVideoRecordBtn');
+    if (toggleVideoRecordBtn) {
+        toggleVideoRecordBtn.addEventListener('click', function () {
+            if (toggleVideoRecordBtn.disabled) return;
+            if (videoMediaRecorder && videoMediaRecorder.state === 'recording') {
+                // To'xtatib yuborish
+                toggleVideoRecordBtn.disabled = true;
+                var tipEl = document.getElementById('videoRecTip');
+                if (tipEl) tipEl.textContent = "Video tayyorlanmoqda, kuting...";
+                clearInterval(videoRecInterval);
+                videoRecInterval = null;
+                videoMediaRecorder.stop();
+            } else {
+                if (!cameraStream) {
+                    recordWhenCameraReady = true;
+                    toggleVideoRecordBtn.disabled = true;
+                    var tipEl2 = document.getElementById('videoRecTip');
+                    if (tipEl2) tipEl2.textContent = "Kamera ulanmoqda, biroz kuting...";
+                    startLiveCamera();
+                    return;
+                }
+                beginVideoRecording();
+            }
+        });
+    }
+
+    function beginVideoRecording() {
+        if (!cameraStream || !toggleVideoRecordBtn || toggleVideoRecordBtn.disabled) return;
+        var videoTrack = cameraStream.getVideoTracks()[0];
+        if (!videoTrack || videoTrack.readyState !== 'live') {
+            showCameraError("Kamera oqimi to'xtagan. Kamerani yopib, qayta oching.");
+            stopLiveCamera();
+            return;
+        }
+
+        var supportedTypes = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+        var recorderError = null;
+        videoMediaRecorder = null;
+        for (var typeIndex = 0; typeIndex < supportedTypes.length && !videoMediaRecorder; typeIndex++) {
+            var mimeType = supportedTypes[typeIndex];
+            if (typeof MediaRecorder.isTypeSupported === 'function' && !MediaRecorder.isTypeSupported(mimeType)) continue;
+            try {
+                videoMediaRecorder = new MediaRecorder(cameraStream, { mimeType: mimeType });
+            } catch (error) {
+                recorderError = error;
+            }
+        }
+        if (!videoMediaRecorder) {
+            try {
+                videoMediaRecorder = new MediaRecorder(cameraStream);
+            } catch (error) {
+                showCameraError("Bu qurilmada video yozib bo'lmadi: " + (recorderError || error).message);
+                return;
+            }
+        }
+
+        videoChunks = [];
+        var recorder = videoMediaRecorder;
+        recorder.ondataavailable = function (event) {
+            if (event.data && event.data.size > 0) videoChunks.push(event.data);
+        };
+        recorder.onerror = function (event) {
+            var message = event.error && event.error.message ? event.error.message : "Kamera oqimida xatolik yuz berdi.";
+            showCameraError("Video yozish to'xtadi: " + message);
+            toggleVideoRecordBtn.disabled = false;
+        };
+        recorder.onstop = function () {
+            // Interval har doim tozalansin
+            clearInterval(videoRecInterval);
+            videoRecInterval = null;
+
+            if (videoRecordingCancelled) {
+                videoRecordingCancelled = false;
+                videoChunks = [];
+                stopLiveCamera();
+                if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+                return;
+            }
+            var chunkType = videoChunks.length ? videoChunks[0].type : '';
+            var videoType = recorder.mimeType || chunkType || 'video/webm';
+            var blob = new Blob(videoChunks, { type: videoType });
+            videoChunks = [];
+            if (blob.size > 0) {
+                sendVideoMessage(blob);
+            } else {
+                showCameraError("Video yozilmadi. Qayta urinib ko'ring.");
+                if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+                stopLiveCamera();
+            }
+        };
+
+        try {
+            recorder.start(1000);
+        } catch (error) {
+            showCameraError("Video yozishni boshlash imkoni bo'lmadi: " + error.message);
+            if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+            return;
+        }
+
+        var cameraErrorBanner = document.getElementById('cameraErrorBanner');
+        if (cameraErrorBanner) cameraErrorBanner.classList.add('d-none');
+        videoRecSeconds = 0;
+        document.getElementById('videoRecTimer').textContent = '00:00';
+        document.getElementById('videoCircleFrame').classList.add('recording');
+        document.getElementById('videoRecLiveBadge').classList.remove('d-none');
+        document.getElementById('toggleVideoRecordIcon').className = 'fa-solid fa-paper-plane';
+        document.getElementById('videoRecTip').textContent = "YOZILMOQDA — tugmani yana bosib videoni yuboring";
+        videoRecInterval = setInterval(function () {
+            videoRecSeconds++;
+            var mins = Math.floor(videoRecSeconds / 60);
+            var secs = videoRecSeconds % 60;
+            document.getElementById('videoRecTimer').textContent = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }, 1000);
+    }
+
+    function sendVideoMessage(videoBlob) {
+        if (!activePartnerId) {
+            showCameraError("Avval suhbatdoshni tanlang.");
+            return;
+        }
+        stopLiveCamera();
+        var csrfInput = document.querySelector('#chatInputForm [name=csrfmiddlewaretoken]');
+        var csrfToken = csrfInput ? csrfInput.value : '';
+        var formData = new FormData();
+        formData.append('receiver_id', activePartnerId);
+        var extension = videoBlob.type.indexOf('video/mp4') === 0 ? 'mp4' : 'webm';
+        formData.append('video_file', videoBlob, 'video_circle_' + Date.now() + '.' + extension);
+
+        fetch("{% url 'chat_send_message' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData
+        })
+        .then(function (res) {
+            return res.text().then(function (body) {
+                var data;
+                try {
+                    data = JSON.parse(body);
+                } catch (error) {
+                    throw new Error(res.status === 413
+                        ? "Video hajmi server ruxsat bergan chegaradan katta."
+                        : "Server video javobini o'qiy olmadi (HTTP " + res.status + ").");
+                }
+                if (!res.ok || data.status !== 'success') {
+                    throw new Error(data.message || "Server videoni qabul qilmadi (HTTP " + res.status + ").");
+                }
+                return data;
+            });
+        })
+        .then(function (data) {
+            if (data.status === 'success') {
+                var placeholder = document.getElementById('noMessagesPlaceholder');
+                if (placeholder) placeholder.remove();
+                appendMessageBubble(data.message, true);
+                scrollToBottom();
+                if (videoCircleModal) videoCircleModal.hide();
+            } else {
+                showCameraError(data.message || "Video xabar yuborishda xatolik yuz berdi");
+                if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+            }
+        })
+        .catch(function (error) {
+            showCameraError(error.message || "Video yuborishda server xatosi");
+            if (toggleVideoRecordBtn) toggleVideoRecordBtn.disabled = false;
+        });
+    }
+
+    var chatVideoUploadBtn = document.getElementById('chatVideoUploadBtn');
+    var chatVideoFileInput = document.getElementById('chatVideoFileInput');
+    var chatVideoUploadStatus = document.getElementById('chatVideoUploadStatus');
+    var videoUploadInProgress = false;
+
+    function setChatVideoUploadStatus(message, isError) {
+        if (!chatVideoUploadStatus) return;
+        chatVideoUploadStatus.textContent = message;
+        chatVideoUploadStatus.classList.toggle('d-none', !message);
+        chatVideoUploadStatus.classList.toggle('text-danger', !!isError);
+        chatVideoUploadStatus.classList.toggle('text-success', !isError && !!message);
+    }
+
+    function sendUploadedVideo(videoFile) {
+        if (!activePartnerId) {
+            setChatVideoUploadStatus("Avval suhbatdoshni tanlang.", true);
+            return Promise.resolve();
+        }
+        if (videoUploadInProgress) return Promise.resolve();
+        if (!videoFile.size) {
+            setChatVideoUploadStatus("Video fayli bo'sh.", true);
+            return Promise.resolve();
+        }
+
+        var videoExtension = /\.(3g2|3gp|avi|m2ts|m2v|m4v|mkv|mov|mp4|mpeg|mpg|mts|ogv|webm)$/i.test(videoFile.name);
+        var hasVideoMimeType = videoFile.type && videoFile.type.indexOf('video/') === 0;
+        if (videoFile.type && !hasVideoMimeType && !videoExtension) {
+            setChatVideoUploadStatus("Tanlangan fayl video formatida emas.", true);
+            return Promise.resolve();
+        }
+
+        if (videoMediaRecorder && videoMediaRecorder.state === 'recording') {
+            videoChunks = [];
+            videoMediaRecorder.stop();
+        }
+        stopLiveCamera();
+
+        var formData = new FormData();
+        formData.append('receiver_id', activePartnerId);
+        formData.append('attachment', videoFile, videoFile.name);
+        var csrfInput = document.querySelector('#chatInputForm [name=csrfmiddlewaretoken]');
+        var csrfToken = csrfInput ? csrfInput.value : '';
+        videoUploadInProgress = true;
+        if (chatVideoUploadBtn) chatVideoUploadBtn.disabled = true;
+        if (chatVideoFileInput) chatVideoFileInput.disabled = true;
+        setChatVideoUploadStatus("Video yuborilmoqda: " + videoFile.name + " (0%)");
+
+        return new Promise(function (resolve, reject) {
+            var request = new XMLHttpRequest();
+            request.open('POST', "{% url 'chat_send_message' %}");
+            request.timeout = 180000;
+            if (csrfToken) request.setRequestHeader('X-CSRFToken', csrfToken);
+
+            request.upload.addEventListener('progress', function (event) {
+                if (!event.lengthComputable) return;
+                var percent = Math.round((event.loaded / event.total) * 100);
+                setChatVideoUploadStatus("Video yuborilmoqda... " + percent + "%");
+            });
+
+            request.addEventListener('load', function () {
+                var data;
+                try {
+                    data = JSON.parse(request.responseText);
+                } catch (error) {
+                    reject(new Error(request.status === 413
+                        ? "Video server hajm limitidan oshdi."
+                        : "Server javobi noto'g'ri (HTTP " + request.status + ")."));
+                    return;
+                }
+                if (request.status < 200 || request.status >= 300 || data.status !== 'success') {
+                    reject(new Error(data.message || "Video yuborilmadi (HTTP " + request.status + ")."));
+                    return;
+                }
+                resolve(data);
+            });
+            request.addEventListener('error', function () {
+                reject(new Error("Tarmoqqa ulanish uzildi. Internetni tekshirib qayta yuboring."));
+            });
+            request.addEventListener('timeout', function () {
+                reject(new Error("Video yuklash vaqti tugadi. Kichikroq video bilan qayta urinib ko'ring."));
+            });
+            request.addEventListener('abort', function () {
+                reject(new Error("Video yuborish bekor qilindi."));
+            });
+            request.send(formData);
+        })
+        .then(function (data) {
+            var placeholder = document.getElementById('noMessagesPlaceholder');
+            if (placeholder) placeholder.remove();
+            appendMessageBubble(data.message, true);
+            scrollToBottom();
+            setChatVideoUploadStatus("Video yuborildi.");
+            setTimeout(function () {
+                if (chatVideoUploadStatus && chatVideoUploadStatus.textContent === "Video yuborildi.") {
+                    setChatVideoUploadStatus("");
+                }
+            }, 2500);
+        })
+        .catch(function (error) {
+            setChatVideoUploadStatus(error.message || "Video yuborishda server xatosi.", true);
+        })
+        .then(function () {
+            videoUploadInProgress = false;
+            if (chatVideoUploadBtn) chatVideoUploadBtn.disabled = false;
+            if (chatVideoFileInput) {
+                chatVideoFileInput.disabled = false;
+                chatVideoFileInput.value = '';
+            }
+        });
+    }
+
+    if (chatVideoUploadBtn && chatVideoFileInput) {
+        chatVideoUploadBtn.addEventListener('click', function () {
+            if (!activePartnerId) {
+                setChatVideoUploadStatus("Avval suhbatdoshni tanlang.", true);
+                return;
+            }
+            chatVideoFileInput.click();
+        });
+        chatVideoFileInput.addEventListener('change', function () {
+            var videoFile = chatVideoFileInput.files && chatVideoFileInput.files[0];
+            if (videoFile) sendUploadedVideo(videoFile);
+        });
+    }
+
+    // Dumaloq videoni ijro etish / to'xtatish
+    window.togglePlayVideoNote = function (bubbleEl) {
+        var video = bubbleEl.querySelector('video');
+        var overlay = bubbleEl.querySelector('.video-circle-overlay');
+        var icon = bubbleEl.querySelector('.video-circle-icon');
+        if (!video) return;
+
+        if (video.paused) {
+            document.querySelectorAll('.video-circle-element').forEach(function (v) {
+                if (v !== video) {
+                    v.pause();
+                    var ov = v.parentElement.querySelector('.video-circle-overlay');
+                    if (ov) ov.classList.remove('playing');
+                    var ic = v.parentElement.querySelector('.video-circle-icon');
+                    if (ic) ic.className = 'fa-solid fa-play video-circle-icon';
+                }
+            });
+            video.play();
+            if (overlay) overlay.classList.add('playing');
+            if (icon) icon.className = 'fa-solid fa-pause video-circle-icon';
+            video.onended = function () {
+                if (overlay) overlay.classList.remove('playing');
+                if (icon) icon.className = 'fa-solid fa-play video-circle-icon';
+            };
+        } else {
+            video.pause();
+            if (overlay) overlay.classList.remove('playing');
+            if (icon) icon.className = 'fa-solid fa-play video-circle-icon';
+        }
+    };
+
+    // ==========================================
+    // KONTAKT ISMINI O'ZGARTIRISH (FAQAT CHAT UCHUN TAXALLUS)
+    // ==========================================
+    window.openEditPartnerNameModal = function (partnerId, currentName) {
+        document.getElementById('editPartnerTargetId').value = partnerId;
+        var input = document.getElementById('editPartnerNameInput');
+        if (input) input.value = currentName || '';
+        var modalEl = document.getElementById('editPartnerNameModal');
+        var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    };
+
+    var confirmEditNameBtn = document.getElementById('confirmEditPartnerNameBtn');
+    if (confirmEditNameBtn) {
+        confirmEditNameBtn.addEventListener('click', function () {
+            var partnerId = document.getElementById('editPartnerTargetId').value;
+            var newName = (document.getElementById('editPartnerNameInput').value || '').trim();
+            if (!partnerId) return;
+
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            var formData = new FormData();
+            formData.append('custom_name', newName);
+
+            confirmEditNameBtn.disabled = true;
+            fetch('/chat/api/user/' + partnerId + '/edit-name/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                confirmEditNameBtn.disabled = false;
+                if (data.status === 'success') {
+                    var headerNameSpan = document.getElementById('activePartnerDisplayName');
+                    if (headerNameSpan) headerNameSpan.textContent = data.display_name;
+
+                    var activeItemName = document.querySelector('.contact-item.active .contact-name');
+                    if (activeItemName) activeItemName.textContent = data.display_name;
+
+                    var modalEl = document.getElementById('editPartnerNameModal');
+                    var modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                } else {
+                    alert(data.message || "Xatolik yuz berdi");
+                }
+            })
+            .catch(function () {
+                confirmEditNameBtn.disabled = false;
+                alert("Server xatosi");
+            });
+        });
+    }
+
+    // ==========================================
+    // SUHBAT TARIXINI TOZALASH
+    // ==========================================
+    window.openClearChatHistoryModal = function (partnerId, partnerName) {
+        document.getElementById('clearChatTargetId').value = partnerId;
+        var lbl = document.getElementById('clearForPartnerNameLabel');
+        if (lbl) lbl.textContent = partnerName || 'Suhbatdosh';
+        var modalEl = document.getElementById('clearChatHistoryModal');
+        var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    };
+
+    var confirmClearBtn = document.getElementById('confirmClearChatBtn');
+    if (confirmClearBtn) {
+        confirmClearBtn.addEventListener('click', function () {
+            var partnerId = document.getElementById('clearChatTargetId').value;
+            if (!partnerId) return;
+
+            var clearForEveryone = document.getElementById('clearForEveryoneCheck').checked;
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            var formData = new FormData();
+            formData.append('clear_for_everyone', clearForEveryone ? 'true' : 'false');
+
+            confirmClearBtn.disabled = true;
+            fetch('/chat/api/conversation/' + partnerId + '/clear/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                confirmClearBtn.disabled = false;
+                if (data.status === 'success') {
+                    if (messagesContainer) {
+                        messagesContainer.innerHTML = '<div class="chat-date-divider"><span class="chat-date-pill">Suhbat boshlanishi</span></div>' +
+                            '<div class="text-center py-5 text-muted" id="noMessagesPlaceholder">' +
+                            '<i class="fa-regular fa-paper-plane fs-1 mb-2 d-block opacity-50 text-primary"></i>' +
+                            '<h6 class="fw-bold mb-1">Muloqotni boshlang!</h6>' +
+                            '<p class="small">Xabar yozing yoki ovozli xabar jo\'nating.</p>' +
+                            '</div>';
+                    }
+                    var modalEl = document.getElementById('clearChatHistoryModal');
+                    var modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                } else {
+                    alert(data.message || "Xatolik yuz berdi");
+                }
+            })
+            .catch(function () {
+                confirmClearBtn.disabled = false;
+                alert("Server xatosi");
+            });
+        });
+    }
+
+    // ==========================================
+    // CHATNI RO'YXATDAN BUTUNLAY O'CHIRISH
+    // ==========================================
+    window.openDeleteConversationModal = function (partnerId, partnerName) {
+        document.getElementById('deleteConvTargetId').value = partnerId;
+        var modalEl = document.getElementById('deleteConversationModal');
+        var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    };
+
+    var confirmDeleteConvBtn = document.getElementById('confirmDeleteConvBtn');
+    if (confirmDeleteConvBtn) {
+        confirmDeleteConvBtn.addEventListener('click', function () {
+            var partnerId = document.getElementById('deleteConvTargetId').value;
+            if (!partnerId) return;
+
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            confirmDeleteConvBtn.disabled = true;
+            fetch('/chat/api/conversation/' + partnerId + '/delete/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                confirmDeleteConvBtn.disabled = false;
+                if (data.status === 'success') {
+                    window.location.href = "{% url 'chat' %}";
+                } else {
+                    alert(data.message || "Xatolik yuz berdi");
+                }
+            })
+            .catch(function () {
+                confirmDeleteConvBtn.disabled = false;
+                alert("Server xatosi");
+            });
+        });
+    }
+
+    // ==========================================
+    // FOYDALANUVCHINI BLOKLASH / BLOKDAN CHIQARISH (Real-time, refresh kerak emas)
+    // ==========================================
+    window.toggleBlockUser = function (partnerId) {
+        if (!partnerId) return;
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch('/chat/api/user/' + partnerId + '/toggle-block/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (data.status === 'success') {
+                // Refresh qilmasdan UI ni yangilash
+                var isBlocked = data.is_blocked; // True = hozir blocklandik
+                var inputArea = document.getElementById('messageInputArea');
+                var blockedBanner = document.getElementById('chatBlockedBanner');
+                var blockBtn = document.getElementById('blockUserBtn');
+
+                if (isBlocked) {
+                    // Blokladik - input yopilsin, banner ko'rinsin
+                    if (inputArea) inputArea.style.display = 'none';
+                    if (!blockedBanner) {
+                        var banner = document.createElement('div');
+                        banner.id = 'chatBlockedBanner';
+                        banner.className = 'text-center py-3 text-muted small';
+                        banner.style.cssText = 'background:var(--danger-light);border-radius:12px;margin:12px;padding:16px;';
+                        banner.innerHTML = '<i class="fa-solid fa-ban text-danger me-2"></i>Bu foydalanuvchini bloklagansiz. <button onclick="toggleBlockUser(' + partnerId + ')" class="btn btn-sm btn-outline-danger ms-2 rounded-pill">Blokdan chiqarish</button>';
+                        if (inputArea) inputArea.parentNode.insertBefore(banner, inputArea);
+                    }
+                    if (blockBtn) {
+                        blockBtn.innerHTML = '<i class="fa-solid fa-unlock me-1"></i> Blokdan chiqarish';
+                        blockBtn.classList.remove('btn-danger');
+                        blockBtn.classList.add('btn-warning');
+                    }
+                } else {
+                    // Blokdan chiqardik
+                    if (inputArea) inputArea.style.display = '';
+                    var existBanner = document.getElementById('chatBlockedBanner');
+                    if (existBanner) existBanner.remove();
+                    if (blockBtn) {
+                        blockBtn.innerHTML = '<i class="fa-solid fa-ban me-1"></i> Bloklash';
+                        blockBtn.classList.remove('btn-warning');
+                        blockBtn.classList.add('btn-danger');
+                    }
+                }
+                // Toast xabar
+                var msg = isBlocked ? 'Foydalanuvchi bloklandi' : 'Blokdan chiqarildi';
+                if (typeof showChatToast === 'function') showChatToast(msg);
+            } else {
+                alert(data.message || "Xatolik yuz berdi");
+            }
+        })
+        .catch(function () {
+            alert("Server xatosi");
+        });
+    };
+
+    // Block holatini real-time tekshirish (har 5 soniyada)
+    var currentPartnerId = document.getElementById('chatReceiverId') ? document.getElementById('chatReceiverId').value : null;
+    if (currentPartnerId) {
+        var lastBlockState = null;
+        setInterval(function() {
+            fetch('/chat/api/user/' + currentPartnerId + '/block-status/')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.status !== 'success') return;
+                var key = data.is_blocked_by_me + '|' + data.is_blocked_by_partner;
+                if (lastBlockState === key) return; // Hech narsa o'zgarmagan
+                lastBlockState = key;
+                var inputArea = document.getElementById('messageInputArea');
+                var existBanner = document.getElementById('chatBlockedByPartnerBanner');
+                if (data.is_blocked_by_partner && !data.is_blocked_by_me) {
+                    // Partner bizni bloklagan
+                    if (inputArea) inputArea.style.display = 'none';
+                    if (!existBanner) {
+                        var banner = document.createElement('div');
+                        banner.id = 'chatBlockedByPartnerBanner';
+                        banner.style.cssText = 'background:var(--danger-light);border-radius:12px;margin:12px;padding:16px;text-align:center;';
+                        banner.innerHTML = '<i class="fa-solid fa-ban text-danger me-2"></i><span class="text-muted small">Bu foydalanuvchi sizni bloklagan</span>';
+                        if (inputArea) inputArea.parentNode.insertBefore(banner, inputArea);
+                    }
+                } else {
+                    if (existBanner) existBanner.remove();
+                    if (!data.is_blocked_by_me && inputArea) inputArea.style.display = '';
+                }
+            })
+            .catch(function() {});
+        }, 5000);
+    }
+
+    // ==========================================
+    // YANGI SUHBAT MODALIDA JONLI QIDIRUV (BAZADAGI BARCHA ODAMLAR)
+    // ==========================================
+    if (dirSearchInput) {
+        var dirSearchTimer = null;
+        dirSearchInput.addEventListener('input', function () {
+            var q = this.value.trim();
+            clearTimeout(dirSearchTimer);
+            dirSearchTimer = setTimeout(function () {
+                fetch('/chat/api/search-users/?q=' + encodeURIComponent(q))
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        if (data.status === 'success') {
+                            var dirList = document.getElementById('directoryList');
+                            if (!dirList) return;
+                            if (!data.users || data.users.length === 0) {
+                                dirList.innerHTML = '<div class="text-center py-4 text-muted small"><i class="fa-solid fa-user-slash me-1"></i> Hech kim topilmadi</div>';
+                                return;
+                            }
+                            var html = '<div class="text-muted small fw-bold px-2 mb-2 text-uppercase" style="letter-spacing: 0.5px;">Topilgan kontaktlar (' + data.users.length + ')</div>';
+                            data.users.forEach(function (u) {
+                                var avatarHTML = u.avatar_url ? 
+                                    '<img src="' + u.avatar_url + '" alt="' + u.display_name + '" class="contact-avatar-img">' :
+                                    '<div class="contact-avatar-initials" style="font-size: 0.95rem;">' + u.initial + '</div>';
+                                var onlineDot = u.is_online ? '<span class="online-indicator-dot pulse"></span>' : '';
+
+                                html += '<a href="' + u.chat_url + '" class="dir-user-item">' +
+                                        '<div class="contact-avatar-wrap" style="width: 42px; height: 42px;">' +
+                                        avatarHTML + onlineDot +
+                                        '</div>' +
+                                        '<div class="flex-grow-1 min-w-0">' +
+                                        '<div class="fw-bold small text-truncate">' + u.display_name + '</div>' +
+                                        '<div class="text-muted" style="font-size: 0.75rem;">' +
+                                        '<span class="badge bg-' + u.role_class + '-subtle text-' + u.role_class + '">' + u.role_label + '</span>' +
+                                        '</div>' +
+                                        '</div>' +
+                                        '<div class="text-primary small">' +
+                                        '<i class="fa-solid fa-comment-dots fs-5"></i>' +
+                                        '</div>' +
+                                        '</a>';
+                            });
+                            dirList.innerHTML = html;
+                        }
+                    });
+            }, 250);
+        });
+    }
+
+    // Audio tinglash funksiyasi
+    window.togglePlayVoice = function (btn) {
+        var player = btn.closest('.voice-message-player');
+        var audioSrc = player.getAttribute('data-audio-src');
+        if (!audioSrc) return;
+
+        var icon = btn.querySelector('i');
+        var bars = player.querySelectorAll('.voice-bar');
+
+        if (currentAudio && currentAudio.src.includes(audioSrc)) {
+            if (currentAudio.paused) {
+                currentAudio.play();
+                icon.className = 'fa-solid fa-pause';
+                bars.forEach(function (b) { b.classList.add('playing'); });
+            } else {
+                currentAudio.pause();
+                icon.className = 'fa-solid fa-play';
+                bars.forEach(function (b) { b.classList.remove('playing'); });
+            }
+        } else {
+            if (currentAudio) {
+                currentAudio.pause();
+                document.querySelectorAll('.voice-play-btn i').forEach(function (i) { i.className = 'fa-solid fa-play'; });
+                document.querySelectorAll('.voice-bar').forEach(function (b) { b.classList.remove('playing'); });
+            }
+
+            currentAudio = new Audio(audioSrc);
+            currentAudio.play();
+            icon.className = 'fa-solid fa-pause';
+            bars.forEach(function (b) { b.classList.add('playing'); });
+
+            currentAudio.onended = function () {
+                icon.className = 'fa-solid fa-play';
+                bars.forEach(function (b) { b.classList.remove('playing'); });
+            };
+        }
+    };
+});
+</script>
+{% endblock %}

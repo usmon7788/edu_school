@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load lang_tags %}
+
+{% block title %}{{ t.teacher_portal }} — {{ teacher.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- ==========================================
+         USTOZ ISH STOLI — ASOSIY BANNER (YANGICHA AURORA MESH)
+         ========================================== -->
+    <div class="card border-0 mb-4 overflow-hidden shadow-lg teacher-hero-card" style="border-radius: 28px; background: linear-gradient(135deg, #090d16 0%, #1e1b4b 40%, #3730a3 75%, #6366f1 100%); color: #ffffff; border: 1px solid rgba(255,255,255,0.12);">
+        <div class="card-body p-4 p-md-5 position-relative">
+            <!-- Background decorative shape -->
+            <div style="position:absolute; right:-40px; top:-40px; width:300px; height:300px; background: radial-gradient(circle, rgba(245,158,11,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+            <div style="position:absolute; left:40%; bottom:-60px; width:260px; height:260px; background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+
+            <div class="row align-items-center g-4 position-relative" style="z-index: 2;">
+                <!-- Avatar -->
+                <div class="col-auto">
+                    <div style="width: 90px; height: 90px; border-radius: 24px; border: 3px solid rgba(255,255,255,0.4); overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,0.3); background: #ffffff;">
+                        {% if teacher.avatar and teacher.avatar.name %}
+                            <img src="{{ teacher.avatar.url }}" alt="{{ teacher.full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center h-100 fw-bold fs-1 text-white" style="font-family:'Outfit',sans-serif; background: linear-gradient(135deg, #f59e0b, #ef4444);">
+                                {{ teacher.first_name|default:teacher.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="col">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
+                            <i class="fa-solid fa-chalkboard-user me-1"></i> {{ t.teacher_portal }}
+                        </span>
+                        {% if mentored_class %}
+                        <span class="badge bg-white text-dark px-3 py-1 rounded-pill fw-bold">
+                            <i class="fa-solid fa-crown text-warning me-1"></i> {{ mentored_class.name }} {{ t.class_teacher|lower }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <h2 class="fw-bold mb-1 text-white" style="font-family:'Outfit', sans-serif;">
+                        {{ teacher.full_name }}
+                    </h2>
+
+                    <div class="d-flex flex-wrap gap-3 text-white-50 small mt-2">
+                        <span>
+                            <i class="fa-solid fa-book-open text-info me-1"></i>
+                            {{ t.your_assigned_subject }}: <strong class="text-white">{{ teacher.subject.name|t_sub:current_lang|default:t.unassigned }}</strong>
+                        </span>
+                        <span>
+                            <i class="fa-solid fa-school text-warning me-1"></i>
+                            <strong>{{ t.school_num_prefix }} #{{ teacher.school.number|default:"-" }}</strong>
+                            {% if teacher.school %}({{ teacher.school.name }}){% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="col-12 col-xl-auto d-flex flex-wrap gap-2">
+                    <a href="{% url 'feed' %}" class="btn btn-warning fw-bold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-1 text-dark">
+                        <i class="fa-solid fa-fire"></i> {{ t.feed }}
+                    </a>
+                    <a href="{% url 'teacher_grades' %}" class="btn btn-light fw-bold px-3 py-2 rounded-pill shadow-sm text-primary d-inline-flex align-items-center gap-1">
+                        <i class="fa-solid fa-square-poll-vertical"></i> {{ t.add_grade }}
+                    </a>
+                    <a href="{% url 'teacher_attendance' %}" class="btn btn-outline-light fw-bold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-1">
+                        <i class="fa-solid fa-clipboard-user"></i> {{ t.attendance }}
+                    </a>
+                    <a href="{% url 'teacher_homework' %}" class="btn btn-outline-light fw-bold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-1">
+                        <i class="fa-solid fa-file-circle-plus"></i> {{ t.homework }}
+                    </a>
+                    <a href="{% url 'profile_edit' %}" class="btn btn-outline-light fw-bold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-1">
+                        <i class="fa-solid fa-user-pen"></i> {{ t.profile }}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats row -->
+            <div class="row g-3 mt-3 pt-3 border-top border-white-50">
+                <div class="col-6 col-md-3">
+                    <div class="text-white-50 small">{{ t.today_lessons }}</div>
+                    <div class="fw-bold text-white fs-4">{{ today_lessons|length }}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-white-50 small">{{ t.classes }}</div>
+                    <div class="fw-bold text-white fs-4">{{ all_classes.count }}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-white-50 small">{{ t.your_assigned_subject }}</div>
+                    <div class="fw-bold text-white fs-5 text-truncate">{{ teacher.subject.name|t_sub:current_lang|default:"—" }}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-white-50 small">{{ t.class_teacher }}</div>
+                    <div class="fw-bold text-white fs-5">
+                        {% if mentored_class %}{{ mentored_class.name }}{% else %}{{ t.unassigned }}{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
+         ASOSIY ISH BLOKLARI
+         ========================================== -->
+    <div class="row g-4">
+
+        <!-- CHAP TOMON: Bugungi darslar & Biriktirilgan sinflar -->
+        <div class="col-xl-8">
+
+            <!-- 1. Bugungi Darslar Jadvali -->
+            <div class="card card-modern border-0 mb-4 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-clock text-primary me-2"></i> {{ t.today_lessons }}
+                    </h5>
+                    <a href="{% url 'teacher_timetable' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                        {{ t.timetable }} <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="card-body p-4">
+                    {% if today_lessons %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for lesson in today_lessons %}
+                        <div class="p-3 rounded-3 border bg-light d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width:44px;height:44px;border-radius:12px;background:var(--primary);color:#fff;font-weight:800;font-size:1.15rem;display:flex;align-items:center;justify-content:center;">
+                                    {{ lesson.lesson_number }}
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge bg-primary px-3 py-1 rounded-pill fw-bold">
+                                            {{ lesson.classroom.name }}
+                                        </span>
+                                        <span class="badge bg-light text-secondary border">
+                                            <i class="fa-solid fa-door-open me-1"></i> {{ lesson.room_number|default:t.room }}
+                                        </span>
+                                    </div>
+                                    <h6 class="fw-bold mb-0">{{ lesson.subject.name|t_sub:current_lang }}</h6>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{% url 'teacher_grades' %}" class="btn btn-sm btn-primary-custom px-3 py-2 fw-semibold">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> {{ t.add_grade }}
+                                </a>
+                                <a href="{% url 'teacher_attendance' %}" class="btn btn-sm btn-success-custom px-3 py-2 fw-semibold">
+                                    <i class="fa-solid fa-user-check me-1"></i> {{ t.attendance }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-calendar-check fs-2 text-primary mb-2"></i>
+                        <h6 class="fw-bold mb-1">{{ t.today_lessons }} (0)</h6>
+                        <p class="small mb-0">{{ t.timetable }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 2. Dars Beradigan Sinflar -->
+            <div class="card card-modern border-0 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-users text-success me-2"></i> {{ t.classes }}
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+                    {% if all_classes %}
+                    <div class="row g-3">
+                        {% for c in all_classes %}
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 border shadow-sm h-100 d-flex flex-column justify-content-between" style="background:var(--bg-card);">
+                                <div class="d-flex align-items-start justify-content-between mb-2">
+                                    <div>
+                                        <span class="badge bg-light text-primary border small fw-bold mb-1">{{ c.grade_level }}-{{ t.class_room|lower }}</span>
+                                        <h4 class="fw-bold mb-0" style="font-family:'Outfit', sans-serif;">{{ c.name }}</h4>
+                                    </div>
+                                    <span class="badge bg-success-light text-success fw-bold px-3 py-1 rounded-pill">
+                                        {{ c.student_count }}/{{ c.max_students }} {{ t.student|lower }}
+                                    </span>
+                                </div>
+
+                                <div class="small text-muted mb-3">
+                                    {{ t.class_teacher }}: <strong>{{ c.class_teacher.full_name|default:t.unassigned }}</strong>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'teacher_grades' %}" class="btn btn-outline-primary btn-sm flex-grow-1 fw-semibold py-2">
+                                        <i class="fa-solid fa-book-open me-1"></i> {{ t.grades }}
+                                    </a>
+                                    <a href="{% url 'teacher_attendance' %}" class="btn btn-outline-success btn-sm flex-grow-1 fw-semibold py-2">
+                                        <i class="fa-solid fa-clipboard-check me-1"></i> {{ t.attendance }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <p class="mb-0">{{ t.no_classes_desc }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- O'NG TOMON: So'nggi baholar va Uy vazifalari -->
+        <div class="col-xl-4">
+
+            <!-- 1. So'nggi Baholar -->
+            <div class="card card-modern border-0 mb-4 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-star text-warning me-2"></i> {{ t.recent_grades_history }}
+                    </h5>
+                    <a href="{% url 'teacher_grades' %}" class="text-primary text-decoration-none small fw-semibold">
+                        {{ t.view_all }} <i class="fa-solid fa-chevron-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="card-body p-0">
+                    {% if recent_grades %}
+                    <div class="list-group list-group-flush">
+                        {% for g in recent_grades %}
+                        <div class="list-group-item px-4 py-3 d-flex align-items-center justify-content-between" style="background:transparent; border-color:var(--border);">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge {% if g.grade == 5 %}bg-success{% elif g.grade == 4 %}bg-primary{% elif g.grade == 3 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6 fw-bold px-3 py-2 rounded-circle" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+                                    {{ g.grade }}
+                                </span>
+                                <div>
+                                    <h6 class="fw-bold mb-0">{{ g.student.full_name }}</h6>
+                                    <small class="text-muted">{{ g.student.classroom.name|default:t.class_room }} &bull; {{ g.date|date:"d.m" }}</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-light text-secondary border small">{{ g.subject.name|t_sub:current_lang }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <p class="small mb-2">{{ t.recent_grades_history }} — (0)</p>
+                        <a href="{% url 'teacher_grades' %}" class="btn btn-primary-custom btn-sm">
+                            <i class="fa-solid fa-plus me-1"></i> {{ t.add_grade }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 2. Uy Vazifalari -->
+            <div class="card card-modern border-0 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-book-open text-primary me-2"></i> {{ t.my_homeworks }}
+                    </h5>
+                    <a href="{% url 'teacher_homework' %}" class="text-primary text-decoration-none small fw-semibold">
+                        {{ t.view_all }} <i class="fa-solid fa-chevron-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="card-body p-4">
+                    {% if my_homeworks %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for hw in my_homeworks %}
+                        <div class="p-3 rounded-3 border bg-light">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="badge bg-primary px-2 py-1 small fw-bold">{{ hw.classroom.name }}</span>
+                                <span class="text-danger small fw-semibold">
+                                    <i class="fa-regular fa-clock me-1"></i> {{ hw.due_date|date:"d.m" }}
+                                </span>
+                            </div>
+                            <h6 class="fw-bold mb-1">{{ hw.title }}</h6>
+                            <p class="small text-muted mb-0 text-truncate">{{ hw.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <p class="small mb-2">{{ t.my_homeworks }} — (0)</p>
+                        <a href="{% url 'teacher_homework' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fa-solid fa-plus me-1"></i> {{ t.add_homework }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+

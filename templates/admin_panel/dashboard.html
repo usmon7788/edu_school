@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.admin_dashboard_title }} - {{ t.admin_panel }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+
+    <!-- Admin Hero Banner -->
+    <div class="admin-hero d-flex align-items-start justify-content-between flex-wrap gap-3 anim-1">
+        <div style="position:relative;z-index:2;">
+            <span class="admin-role-badge">
+                <i class="fa-solid fa-shield-halved"></i> {{ t.administrator }}
+            </span>
+            <h1 class="hero-name">{{ t.admin_hero_title }}</h1>
+            <div class="hero-meta-row">
+                <span class="hero-meta-item">
+                    <i class="fa-solid fa-school"></i>
+                    <strong>{{ t.admin_hero_desc }}</strong>
+                </span>
+                <span class="hero-meta-item">
+                    <i class="fa-solid fa-users"></i>
+                    <strong>{{ total_students }} {{ t.student|lower }}</strong>
+                </span>
+            </div>
+            <div class="hero-stats-row">
+                <div class="hero-stat-pill">
+                    <div class="stat-icon" style="background:rgba(239,68,68,0.2);color:#fca5a5;">
+                        <i class="fa-solid fa-school"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ total_schools }}</div>
+                        <div class="stat-lbl">{{ t.school_name }}</div>
+                    </div>
+                </div>
+                <div class="hero-stat-pill">
+                    <div class="stat-icon" style="background:rgba(14,165,233,0.2);color:#7dd3fc;">
+                        <i class="fa-solid fa-chalkboard"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ total_classrooms }}</div>
+                        <div class="stat-lbl">{{ t.class_room }}</div>
+                    </div>
+                </div>
+                <div class="hero-stat-pill">
+                    <div class="stat-icon" style="background:rgba(245,158,11,0.2);color:#fde68a;">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ total_teachers }}</div>
+                        <div class="stat-lbl">{{ t.teacher }}</div>
+                    </div>
+                </div>
+                <div class="hero-stat-pill">
+                    <div class="stat-icon" style="background:rgba(16,185,129,0.2);color:#6ee7b7;">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <div class="stat-num">{{ total_students }}</div>
+                        <div class="stat-lbl">{{ t.student }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="position:relative;z-index:2;" class="d-flex flex-column gap-2">
+            <a href="{% url 'create_classroom' %}" class="btn btn-info text-white fw-bold py-2 px-3 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="fa-solid fa-chalkboard"></i> {{ t.create_classroom }}
+            </a>
+            <a href="{% url 'create_teacher' %}" class="btn-teacher-custom">
+                <i class="fa-solid fa-chalkboard-user"></i> {{ t.create_teacher }}
+            </a>
+            <a href="{% url 'create_student' %}" class="btn-primary-custom">
+                <i class="fa-solid fa-user-graduate"></i> {{ t.create_student }}
+            </a>
+            <a href="/admin/" target="_blank" class="btn-admin-custom">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Django Admin
+            </a>
+        </div>
+    </div>
+
+    <!-- Sinflar va limit nazorati -->
+    <div class="dash-card anim-2">
+        <div class="dash-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h5 class="dash-card-title mb-1">
+                    <span class="dash-card-title-icon" style="background:#fee2e2;color:#ef4444;">
+                        <i class="fa-solid fa-users-between-lines"></i>
+                    </span>
+                    {{ t.classrooms_and_students }}
+                    <span class="limit-pill limit-full ms-2" style="font-size:0.7rem;">Limit: 28</span>
+                </h5>
+                <small class="text-muted">{{ t.notice_28_limit }}</small>
+            </div>
+            <a href="{% url 'create_classroom' %}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
+                <i class="fa-solid fa-plus me-1"></i> {{ t.create_classroom }}
+            </a>
+        </div>
+        <div class="dash-card-body">
+            <div class="row g-4">
+                {% for item in class_stats %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="class-mini-card {% if item.is_full %}border-danger border-2{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="fw-bold mb-0">{{ item.classroom.name }}</h5>
+                                <small class="text-muted">{{ t.school_num_prefix }} #{{ item.classroom.school.number }}</small>
+                            </div>
+                            {% if item.is_full %}
+                                <span class="limit-pill limit-full">
+                                    <i class="fa-solid fa-circle-exclamation"></i> {{ t.class_full }}
+                                </span>
+                            {% elif item.count >= 24 %}
+                                <span class="limit-pill limit-warning">{{ item.available }} {{ t.seats_left }}</span>
+                            {% else %}
+                                <span class="limit-pill limit-ok">{{ item.available }} {{ t.seats_left }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between p-2 rounded-2 small class-curator-box">
+                            <span class="text-muted">
+                                <i class="fa-solid fa-user-tie text-primary me-1"></i> {{ t.class_teacher }}:
+                            </span>
+                            <strong>{{ item.classroom.class_teacher.full_name|default:"—" }}</strong>
+                        </div>
+
+                        <div>
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>{{ t.students_count }}:</span>
+                                <strong>{{ item.count }} / {{ item.max }}</strong>
+                            </div>
+                            <div class="progress-slim">
+                                <div class="progress-bar {% if item.is_full %}bg-danger{% elif item.count >= 24 %}bg-warning{% else %}bg-primary{% endif %}"
+                                     style="width:{{ item.percentage }}%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-top">
+                            <a href="{% url 'classroom_manage' item.classroom.id %}"
+                               class="btn btn-outline-primary btn-sm w-100 fw-semibold">
+                                <i class="fa-solid fa-gear me-1"></i> {{ t.manage_class }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="empty-state text-center py-5">
+                        <div class="empty-state-icon mx-auto mb-3" style="width:60px;height:60px;font-size:1.8rem;border-radius:18px;display:flex;align-items:center;justify-content:center;">
+                            <i class="fa-solid fa-school text-muted"></i>
+                        </div>
+                        <h6 class="fw-bold">{{ t.no_classes_found }}</h6>
+                        <p class="text-muted small mb-3">{{ t.no_classes_desc }}</p>
+                        <a href="{% url 'create_classroom' %}" class="btn btn-primary-custom btn-sm">
+                            <i class="fa-solid fa-plus me-1"></i> {{ t.create_classroom }}
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Ustozlar ro'yxati va olib tashlash (Teachers Management) -->
+    <div class="dash-card anim-3 mt-4">
+        <div class="dash-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h5 class="dash-card-title mb-1">
+                    <span class="dash-card-title-icon" style="background:#e0e7ff;color:#4f46e5;">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </span>
+                    {{ t.teachers_list }}
+                    <span class="badge bg-primary-subtle text-primary ms-2 rounded-pill px-3 py-1">{{ teachers|length }}</span>
+                </h5>
+                <small class="text-muted">{{ t.admin_hero_desc }}</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'create_teacher' %}" class="btn btn-primary-custom btn-sm rounded-pill px-3 fw-semibold">
+                    <i class="fa-solid fa-plus me-1"></i> {{ t.create_teacher }}
+                </a>
+            </div>
+        </div>
+        <div class="dash-card-body p-0">
+            <div class="table-modern-wrapper">
+                <table class="table-modern table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">#</th>
+                            <th>{{ t.teacher }}</th>
+                            <th>Login va Parol 🔑</th>
+                            <th>{{ t.subject }}</th>
+                            <th>{{ t.school_name }}</th>
+                            <th>{{ t.phone }}</th>
+                            <th class="text-end" style="min-width: 140px;">{{ t.actions }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for teacher in teachers %}
+                        <tr>
+                            <td><span class="badge bg-light text-secondary border rounded-pill">{{ forloop.counter }}</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if teacher.avatar and teacher.avatar.name %}
+                                        <img src="{{ teacher.avatar.url }}" alt="{{ teacher.full_name }}" class="avatar-img" style="width: 38px; height: 38px; border-radius:50%; object-fit:cover;">
+                                    {% else %}
+                                        <div class="avatar-img d-inline-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 38px; height: 38px; font-size: 0.9rem; border-radius:50%;">
+                                            {{ teacher.first_name|default:teacher.username|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ teacher.full_name }}</div>
+                                        <small class="text-muted">@{{ teacher.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1" style="min-width: 170px;">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="badge bg-body-secondary text-primary border font-monospace px-2 py-1">@{{ teacher.username }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div class="bg-body-secondary border rounded px-2 py-1 small font-monospace d-flex align-items-center gap-2">
+                                            <span class="pass-mask-text">••••••</span>
+                                            <span class="pass-val-text d-none fw-bold text-success">{{ teacher.initial_password|default:'teacher123' }}</span>
+                                            <button type="button" class="btn btn-sm btn-link p-0 text-muted shadow-none" onclick="toggleTeacherPass(this)" title="Parolni ko'rish">
+                                                <i class="fa-regular fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-link p-0 text-primary shadow-none" onclick="copyCreds('{{ teacher.username }}', '{{ teacher.initial_password|default:'teacher123' }}')" title="Login va paroldan nusxa olish">
+                                                <i class="fa-regular fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <form method="post" action="{% url 'reset_teacher_password' teacher.id %}" class="d-inline" onsubmit="return confirm('Ustoz {{ teacher.full_name }} uchun yangi 6 xonali parol yaratilsinmi?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary p-1 rounded" title="Yangi parol generatsiya qilish">
+                                                <i class="fa-solid fa-arrows-rotate"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if teacher.subject %}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill fw-semibold">
+                                        <i class="fa-solid fa-book-bookmark me-1"></i> {{ teacher.subject.name|t_sub:current_lang }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 rounded-pill small">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ t.unassigned }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if teacher.school %}
+                                    <span class="badge bg-light text-secondary border rounded-pill">
+                                        <i class="fa-solid fa-school me-1"></i> {{ t.school_num_prefix }} #{{ teacher.school.number }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="small text-muted">{{ teacher.phone|default:"—" }}</span>
+                            </td>
+                            <td class="text-end">
+                                <form method="post" action="{% url 'delete_teacher' teacher.id %}" class="d-inline"
+                                      onsubmit="return confirm('{{ t.delete_teacher_confirm }} \n({{ teacher.full_name }})')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
+                                            title="{{ t.delete_teacher }}">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                        <span>{{ t.delete_teacher }}</span>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <div class="empty-state-icon mx-auto mb-2" style="width:50px;height:50px;font-size:1.5rem;display:flex;align-items:center;justify-content:center;">
+                                    <i class="fa-solid fa-chalkboard-user text-muted opacity-50"></i>
+                                </div>
+                                <h6 class="fw-bold">{{ t.no_teachers_found }}</h6>
+                                <p class="small mb-3 text-muted">{{ t.no_teachers_desc }}</p>
+                                <a href="{% url 'create_teacher' %}" class="btn btn-primary-custom btn-sm">
+                                    <i class="fa-solid fa-plus me-1"></i> {{ t.create_teacher }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleTeacherPass(btn) {
+    var parent = btn.closest('.d-flex');
+    var mask = parent.querySelector('.pass-mask-text');
+    var val = parent.querySelector('.pass-val-text');
+    var icon = btn.querySelector('i');
+    if (val.classList.contains('d-none')) {
+        val.classList.remove('d-none');
+        mask.classList.add('d-none');
+        icon.className = 'fa-regular fa-eye-slash';
+    } else {
+        val.classList.add('d-none');
+        mask.classList.remove('d-none');
+        icon.className = 'fa-regular fa-eye';
+    }
+}
+
+function copyCreds(username, password) {
+    var text = "Login: " + username + "\nParol: " + password;
+    navigator.clipboard.writeText(text).then(function() {
+        alert("Nusxa olindi!\n\n" + text);
+    }).catch(function() {
+        prompt("Login va parol:", text);
+    });
+}
+</script>
+{% endblock %}
+

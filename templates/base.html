@@ -1,0 +1,716 @@
+{% load static %}
+{% load lang_tags %}
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" id="htmlRoot">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ t.school_portal }}{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- ===== TEPADAN TUSHUVCHI BILDIRISHNOMALAR (TOP FLOATING TOASTS) ===== -->
+    <div id="topNotificationContainer" class="top-notification-container" aria-live="polite"></div>
+
+    <!-- ===== NAVBAR ===== -->
+    <nav id="mainNavbar" class="navbar navbar-expand-xl navbar-custom">
+        <div class="container-fluid px-2 px-lg-4">
+
+            <!-- Brand -->
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'dashboard_redirect' %}">
+                <span class="brand-badge">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </span>
+                <span class="brand-text">
+                    Edu<span class="text-gradient-primary">Maktab</span><span class="dot-accent">.</span>
+                </span>
+            </a>
+
+            <!-- Mobile toggler -->
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false">
+                <i class="fa-solid fa-bars text-dark fs-5"></i>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+
+                <!-- Nav links -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
+                    {% if user.is_authenticated %}
+                    {% if user.role == 'student' %}
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}"
+                            href="{% url 'student_dashboard' %}">
+                            <i class="fa-solid fa-house"></i> {{ t.dashboard }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_grades' %}active{% endif %}"
+                            href="{% url 'student_grades' %}">
+                            <i class="fa-solid fa-award"></i> {{ t.grades }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_timetable' %}active{% endif %}"
+                            href="{% url 'student_timetable' %}">
+                            <i class="fa-solid fa-calendar-days"></i> {{ t.timetable }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_homework' %}active{% endif %}"
+                            href="{% url 'student_homework' %}">
+                            <i class="fa-solid fa-book-open"></i> {{ t.homework }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_attendance' %}active{% endif %}"
+                            href="{% url 'student_attendance' %}">
+                            <i class="fa-solid fa-user-check"></i> {{ t.attendance }}
+                        </a>
+                    </li>
+                    {% elif user.role == 'teacher' %}
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}"
+                            href="{% url 'teacher_dashboard' %}">
+                            <i class="fa-solid fa-chalkboard-user"></i> {{ t.teacher_portal }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'teacher_grades' %}active{% endif %}"
+                            href="{% url 'teacher_grades' %}">
+                            <i class="fa-solid fa-pen-to-square"></i> {{ t.add_grade }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'teacher_attendance' %}active{% endif %}"
+                            href="{% url 'teacher_attendance' %}">
+                            <i class="fa-solid fa-clipboard-check"></i> {{ t.mark_attendance }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'teacher_homework' %}active{% endif %}"
+                            href="{% url 'teacher_homework' %}">
+                            <i class="fa-solid fa-file-arrow-up"></i> {{ t.add_homework }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'teacher_timetable' %}active{% endif %}"
+                            href="{% url 'teacher_timetable' %}">
+                            <i class="fa-solid fa-calendar-week"></i> {{ t.timetable }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.role == 'admin' or user.is_staff or user.is_superuser %}
+                    <li class="nav-item">
+                        <a class="nav-link-custom nav-link-admin" href="{% url 'admin_panel_dashboard' %}">
+                            <i class="fa-solid fa-shield-halved"></i> {{ t.admin_panel }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link-custom nav-link-feed {% if request.resolver_match.url_name == 'feed' %}active{% endif %}"
+                            href="{% url 'feed' %}">
+                            <i class="fa-solid fa-fire text-warning"></i> {{ t.feed }}
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Right side -->
+                <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+
+                    {% if user.is_authenticated %}
+                    <!-- Ixcham Chat xabarlar ikonochkasi -->
+                    <a href="{% url 'chat' %}" class="nav-chat-icon-btn position-relative" title="Muloqot va Xabarlar">
+                        <i class="fa-solid fa-paper-plane text-primary"></i>
+                        <span id="globalChatBadge" class="global-chat-badge d-none">0</span>
+                    </a>
+                    {% endif %}
+
+                    <!-- Dark/Light mode toggle -->
+                    <button class="theme-toggle-btn" id="themeToggle" title="Yorug'/Qorong'u rejim">
+                        <i class="fa-solid fa-sun icon-sun"></i>
+                        <i class="fa-solid fa-moon icon-moon"></i>
+                    </button>
+
+                    <!-- Language switcher -->
+                    <div class="dropdown">
+                        <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            {% if current_lang == 'uz' %}🇺🇿 O'zbekcha
+                            {% elif current_lang == 'ru' %}🇷🇺 Русский
+                            {% else %}🇬🇧 English{% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-1"
+                            style="min-width:160px;">
+                            {% for lang in languages %}
+                            <li>
+                                <a class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2
+                                          {% if current_lang == lang.code %}active fw-bold{% endif %}"
+                                    href="{% url 'switch_language' lang.code %}">
+                                    <span>{{ lang.flag }}</span>
+                                    <span>{{ lang.name }}</span>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                    <!-- User avatar dropdown -->
+                    <div class="dropdown ms-1">
+                        <a href="#" class="nav-user-trigger dropdown-toggle" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            {% if user.avatar and user.avatar.name %}
+                            <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="nav-avatar-img">
+                            {% else %}
+                            <div class="nav-avatar-initials">
+                                {{ user.first_name|default:user.username|slice:":1"|upper }}
+                            </div>
+                            {% endif %}
+                            <div class="nav-user-info d-none d-md-block">
+                                <span class="nav-user-name">{{ user.full_name }}</span>
+                                <span class="nav-user-role">
+                                    {{ user.role|t_role:current_lang }}
+                                </span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down nav-user-chevron d-none d-md-block"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end nav-dropdown-menu p-2" style="min-width:230px;">
+                            <li class="nav-dd-header">
+                                <div class="nav-dd-name">{{ user.full_name }}</div>
+                                <div class="nav-dd-username">@{{ user.username }}</div>
+                                <div class="d-flex gap-1 mt-2 flex-wrap">
+                                    {% if user.school %}
+                                    <span class="badge nav-dd-badge-school">{{ user.school.number }}-maktab</span>
+                                    {% endif %}
+                                    {% if user.classroom %}
+                                    <span class="badge nav-dd-badge-class">{{ user.classroom.name }}</span>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider my-1">
+                            </li>
+                            <li>
+                                <a class="dropdown-item nav-dd-item rounded-2" href="{% url 'profile_edit' %}">
+                                    <i class="fa-solid fa-user-gear"></i> {{ t.edit_profile }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item nav-dd-item rounded-2" href="{% url 'settings_view' %}">
+                                    <i class="fa-solid fa-gear text-primary"></i> Sozlamalar
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item nav-dd-item rounded-2" href="{% url 'feed' %}?filter=my">
+                                    <i class="fa-solid fa-newspaper text-primary"></i> {{ t.my_posts }}
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider my-1">
+                            </li>
+                            <li>
+                                <a class="dropdown-item nav-dd-item nav-dd-logout rounded-2" href="{% url 'logout' %}">
+                                    <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t.logout }}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary-custom btn-sm px-4">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> {{ t.login }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Xabarlar (Messages) -->
+    <div class="container-fluid px-lg-4 mt-3">
+        {% if messages %}
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+                {% for message in messages %}
+                <div class="alert alert-modern alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm"
+                    role="alert">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                        style="width: 34px; height: 34px; background: {% if message.tags == 'error' %}rgba(239, 68, 68, 0.18){% elif message.tags == 'success' %}rgba(16, 185, 129, 0.18){% else %}rgba(79, 70, 229, 0.18){% endif %};">
+                        <i
+                            class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation text-danger{% elif message.tags == 'success' %}fa-circle-check text-success{% else %}fa-circle-info text-primary{% endif %}"></i>
+                    </div>
+                    <div class="flex-grow-1 fw-medium small text-break">{{ message }}</div>
+                    <button type="button" class="btn-close shadow-none position-relative p-2" data-bs-dismiss="alert"
+                        aria-label="{{ t.close|default:'Close' }}"></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ===== ASOSIY KONTENT ===== -->
+    <main class="flex-grow-1" id="mainContent">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ===== FLOATING CHAT LAUNCHER (O'NG PASTKI BURCHAK) ===== -->
+    {% if user.is_authenticated and request.resolver_match.url_name != 'chat' and request.resolver_match.url_name != 'chat_with_user' %}
+    <a href="{% url 'chat' %}" class="floating-chat-launcher" id="floatingChatLauncher" title="Muloqot markazini ochish">
+        <div class="floating-chat-icon-wrap">
+            <i class="fa-solid fa-comments"></i>
+            <span id="floatingChatBadge" class="floating-chat-badge d-none">0</span>
+        </div>
+        <span class="floating-chat-text">Muloqot</span>
+    </a>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="py-4 mt-auto">
+        <div
+            class="container-fluid px-lg-4 text-center text-muted small d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>&copy; 2026 <strong>EduMaktab</strong>. {{ t.school_portal }} &bull; {{ t.all_rights_reserved }}.
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+                <span><i class="fa-solid fa-shield-halved text-success me-1"></i> EduMaktab Portal</span>
+                <span><i class="fa-solid fa-users text-primary me-1"></i> {{ t.notice_28_limit }}</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ===== Dark / Light / Moonlight Mode =====
+        (function () {
+            var saved = localStorage.getItem('edumaktab-theme') || 'light';
+            var root = document.getElementById('htmlRoot') || document.documentElement;
+            root.setAttribute('data-theme', saved);
+            if (saved === 'moonlight') {
+                root.setAttribute('data-bs-theme', 'dark');
+            } else {
+                root.setAttribute('data-bs-theme', saved);
+            }
+        })();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var btn = document.getElementById('themeToggle');
+            var html = document.getElementById('htmlRoot') || document.documentElement;
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    var current = html.getAttribute('data-theme');
+                    var themes = ['light', 'dark', 'moonlight'];
+                    var idx = themes.indexOf(current);
+                    var next = themes[(idx + 1) % themes.length];
+                    html.setAttribute('data-theme', next);
+                    html.setAttribute('data-bs-theme', next === 'moonlight' ? 'dark' : next);
+                    localStorage.setItem('edumaktab-theme', next);
+                    // Icon update
+                    var iconSun = btn.querySelector('.icon-sun');
+                    var iconMoon = btn.querySelector('.icon-moon');
+                    if (next === 'light') { if(iconSun) iconSun.style.display=''; if(iconMoon) iconMoon.style.display='none'; }
+                    else if (next === 'dark') { if(iconSun) iconSun.style.display='none'; if(iconMoon) iconMoon.style.display=''; }
+                    else { if(iconSun) iconSun.style.display='none'; if(iconMoon) iconMoon.style.display=''; }
+                });
+            }
+
+            // ===== Navbar scroll shadow =====
+            var navbar = document.getElementById('mainNavbar');
+            window.addEventListener('scroll', function () {
+                if (navbar) {
+                    navbar.classList.toggle('scrolled', window.scrollY > 20);
+                }
+            });
+
+            // ===== Alert X Close Handler (Barcha xabarlardagi X tugmasi ishlashi uchun) =====
+            document.addEventListener('click', function (e) {
+                var closeBtn = e.target.closest('[data-bs-dismiss="alert"]');
+                if (closeBtn) {
+                    var alertEl = closeBtn.closest('.alert-modern') || closeBtn.closest('.alert');
+                    if (alertEl) {
+                        e.preventDefault();
+                        alertEl.classList.remove('show');
+                        alertEl.style.transition = 'all 0.25s ease';
+                        alertEl.style.opacity = '0';
+                        alertEl.style.transform = 'translateY(-8px)';
+                        setTimeout(function () {
+                            if (alertEl && alertEl.parentNode) {
+                                alertEl.remove();
+                            }
+                        }, 260);
+                    }
+                }
+            });
+
+            // ===== GLOBAL CHAT BILDIRISHNOMALAR VA ONLINE STATUS POLLERI =====
+            {% if user.is_authenticated %}
+            (function () {
+                var shownNotificationIds = new Set();
+                var globalChatBadge = document.getElementById('globalChatBadge');
+                var notifContainer = document.getElementById('topNotificationContainer');
+
+                // Nozik audio signal (Web Audio API orqali generatsiya qilinadi)
+                function playNotificationSound() {
+                    try {
+                        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioCtx) return;
+                        var ctx = new AudioCtx();
+                        var osc = ctx.createOscillator();
+                        var gain = ctx.createGain();
+
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                        osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08); // A5
+                        osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.16); // D6
+
+                        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.46);
+                    } catch (e) {
+                        // Foydalanuvchi hali interfeysga tegmagan bo'lsa AudioContext block bo'lishi mumkin
+                    }
+                }
+
+                // Sozlamalardan ovoz turini o'qish
+                function playNotificationSound() {
+                    var soundType = localStorage.getItem('edumaktab-notif-sound') || 'default';
+                    try {
+                        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioCtx) return;
+                        var ctx = new AudioCtx();
+                        var osc = ctx.createOscillator();
+                        var gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        switch(soundType) {
+                            case 'chime':
+                                osc.type = 'sine';
+                                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                                osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+                                osc.frequency.setValueAtTime(1320, ctx.currentTime + 0.2);
+                                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+                                osc.start(); osc.stop(ctx.currentTime + 0.65); break;
+                            case 'pop':
+                                osc.type = 'sine';
+                                osc.frequency.setValueAtTime(300, ctx.currentTime);
+                                osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.05);
+                                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                                osc.start(); osc.stop(ctx.currentTime + 0.18); break;
+                            case 'whistle':
+                                osc.type = 'sine';
+                                osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                                osc.frequency.setValueAtTime(1600, ctx.currentTime + 0.1);
+                                osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.2);
+                                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                                osc.start(); osc.stop(ctx.currentTime + 0.45); break;
+                            case 'bell':
+                                osc.type = 'triangle';
+                                osc.frequency.setValueAtTime(660, ctx.currentTime);
+                                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.05);
+                                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+                                osc.start(); osc.stop(ctx.currentTime + 0.85); break;
+                            case 'soft':
+                                osc.type = 'sine';
+                                osc.frequency.setValueAtTime(440, ctx.currentTime);
+                                osc.frequency.setValueAtTime(550, ctx.currentTime + 0.15);
+                                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                                osc.start(); osc.stop(ctx.currentTime + 0.55); break;
+                            default: // notification / default
+                                osc.type = 'sine';
+                                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                                osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08);
+                                osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.16);
+                                gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+                                osc.start(); osc.stop(ctx.currentTime + 0.46);
+                        }
+                    } catch (e) {}
+                }
+
+                function escapeHtml(text) {
+                    var div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                function dismissNotifCard(card) {
+                    card.classList.add('hide');
+                    setTimeout(function () {
+                        if (card && card.parentNode) {
+                            card.remove();
+                        }
+                    }, 350);
+                }
+
+                function showTopNotification(item) {
+                    playNotificationSound();
+                    if (!notifContainer) return;
+
+                    var card = document.createElement('div');
+                    card.className = 'top-notification-card';
+
+                    var avatarHtml = item.sender_avatar 
+                        ? '<img src="' + item.sender_avatar + '" class="top-notif-avatar-img" alt="">'
+                        : '<div class="top-notif-avatar-initials">' + escapeHtml(item.sender_initial) + '</div>';
+
+                    card.innerHTML = 
+                        '<div class="top-notif-avatar-wrap">' +
+                            avatarHtml +
+                            '<span class="top-notif-online-dot"></span>' +
+                        '</div>' +
+                        '<div class="top-notif-content">' +
+                            '<div class="top-notif-header">' +
+                                '<span class="top-notif-sender">' + escapeHtml(item.sender_name) + '</span>' +
+                                '<span class="top-notif-role">' + escapeHtml(item.sender_role) + '</span>' +
+                                '<span class="top-notif-time">' + item.time + '</span>' +
+                            '</div>' +
+                            '<div class="top-notif-body">' + escapeHtml(item.message) + '</div>' +
+                        '</div>' +
+                        '<div class="top-notif-actions">' +
+                            '<a href="' + item.chat_url + '" class="top-notif-btn-reply">Javob berish</a>' +
+                            '<button type="button" class="top-notif-btn-close" aria-label="Yopish">&times;</button>' +
+                        '</div>';
+
+                    notifContainer.appendChild(card);
+
+                    // 8 soniyadan so'ng o'zi silliq yo'qolishi
+                    var autoTimer = setTimeout(function () {
+                        dismissNotifCard(card);
+                    }, 8000);
+
+                    // Yopish tugmasi
+                    var closeBtn = card.querySelector('.top-notif-btn-close');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            clearTimeout(autoTimer);
+                            dismissNotifCard(card);
+                        });
+                    }
+
+                    // Kartaga bosganda chatga o'tish
+                    card.addEventListener('click', function (e) {
+                        if (!e.target.closest('a') && !e.target.closest('button')) {
+                            window.location.href = item.chat_url;
+                        }
+                    });
+                }
+
+                // Global tekshirish (Heartbeat va yangi xabarlar)
+                function runGlobalCheck() {
+                    // Agar hozir chat sahifasida va ma'lum kontakt ochiq bo'lsa, uni active_partner_id qilib uzatamiz
+                    var activePartnerInput = document.getElementById('chatReceiverId');
+                    var activePartnerId = activePartnerInput ? activePartnerInput.value : '';
+
+                    var url = "/chat/api/global-check/?t=" + new Date().getTime();
+                    if (activePartnerId) {
+                        url += "&active_partner_id=" + activePartnerId;
+                    }
+
+                    fetch(url)
+                        .then(function (res) { return res.json(); })
+                        .then(function (data) {
+                            if (data.status === 'success') {
+                                // Navbardagi va Floating widgetdagi o'qilmagan xabarlar soni
+                                var floatingChatBadge = document.getElementById('floatingChatBadge');
+                                var unreadText = data.total_unread > 99 ? '99+' : data.total_unread;
+
+                                if (globalChatBadge) {
+                                    if (data.total_unread > 0) {
+                                        globalChatBadge.textContent = unreadText;
+                                        globalChatBadge.classList.remove('d-none');
+                                    } else {
+                                        globalChatBadge.classList.add('d-none');
+                                    }
+                                }
+                                if (floatingChatBadge) {
+                                    if (data.total_unread > 0) {
+                                        floatingChatBadge.textContent = unreadText;
+                                        floatingChatBadge.classList.remove('d-none');
+                                    } else {
+                                        floatingChatBadge.classList.add('d-none');
+                                    }
+                                }
+
+
+                                // Yangi xabarlarni ekranning yuqorisidan chiqarish
+                                if (data.notifications && data.notifications.length > 0) {
+                                    data.notifications.forEach(function (notif) {
+                                        if (!shownNotificationIds.has(notif.id)) {
+                                            shownNotificationIds.add(notif.id);
+                                            showTopNotification(notif);
+                                        }
+                                    });
+                                }
+                            }
+                        })
+                        .catch(function () {});
+                }
+
+                // Sahifa ochilishi bilan darhol va har 4.5 soniyada muntazam chaqirish
+                setTimeout(runGlobalCheck, 800);
+                setInterval(runGlobalCheck, 4500);
+            })();
+            {% endif %}
+
+            // ===== 3D KITOB VAROQLASH (BOOK PAGE TURN) ANIMATSIYASI VA TOVUSHI =====
+            (function() {
+                var pageSheet = document.getElementById('bookPageSheet');
+                if (!pageSheet) return;
+
+                // Web Audio API orqali nozik va mayin varoq shitirlash tovushi
+                var audioCtx = null;
+                function playPaperTurnSound() {
+                    try {
+                        if (!audioCtx) {
+                            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        }
+                        if (audioCtx.state === 'suspended') {
+                            audioCtx.resume();
+                        }
+                        var soundDuration = 0.55;
+                        var bufferSize = Math.floor(audioCtx.sampleRate * soundDuration);
+                        var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                        var output = noiseBuffer.getChannelData(0);
+                        for (var i = 0; i < bufferSize; i++) {
+                            var progress = i / bufferSize;
+                            var envelope = Math.sin(Math.PI * progress) * Math.exp(-progress * 1.8);
+                            output[i] = (Math.random() * 2 - 1) * envelope;
+                        }
+                        var whiteNoise = audioCtx.createBufferSource();
+                        whiteNoise.buffer = noiseBuffer;
+
+                        var filter = audioCtx.createBiquadFilter();
+                        filter.type = 'bandpass';
+                        filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
+                        filter.frequency.exponentialRampToValueAtTime(280, audioCtx.currentTime + soundDuration);
+                        filter.Q.value = 1.0;
+
+                        var gainNode = audioCtx.createGain();
+                        gainNode.gain.setValueAtTime(0.045, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + soundDuration);
+
+                        whiteNoise.connect(filter);
+                        filter.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+
+                        whiteNoise.start();
+                    } catch(e) {}
+                }
+
+                // Sahifaga kirganda birinchi marta yumshoq ochilish
+                setTimeout(function() {
+                    if (pageSheet) {
+                        pageSheet.classList.remove('flipping-in');
+                    }
+                }, 1050);
+
+                // Sahifadagi barcha ichki sahifaga yo'naltiruvchi havolalarni bosganda varoq burish
+                document.addEventListener('click', function(e) {
+                    var link = e.target.closest('a');
+                    if (!link) return;
+
+                    var href = link.getAttribute('href');
+                    var target = link.getAttribute('target');
+
+                    if (!href || href === '#' || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:') || target === '_blank') {
+                        return;
+                    }
+
+                    // Maxsus harakatlar: modallar, yuklab olishlar, share, delete API lar
+                    if (href.includes('/api/') || href.includes('/download') || href.includes('delete') || link.hasAttribute('download') || link.getAttribute('data-bs-toggle') || link.classList.contains('no-page-turn')) {
+                        return;
+                    }
+
+                    // Faqat o'z domenimizdagi havolalar
+                    if (link.hostname && link.hostname !== window.location.hostname) {
+                        return;
+                    }
+
+                    // Varoqni burish animatsiyasi!
+                    e.preventDefault();
+                    playPaperTurnSound();
+                    pageSheet.classList.remove('flipping-in');
+                    pageSheet.classList.add('flipping-out');
+
+                    setTimeout(function() {
+                        window.location.href = href;
+                    }, 940);
+                });
+
+                // Tugmalar: Oldingi va Keyingi varoq
+                var btnPrev = document.getElementById('btnPrevPage');
+                var btnNext = document.getElementById('btnNextPage');
+                var dogEar = document.getElementById('bookDogEar');
+
+                if (btnPrev) {
+                    btnPrev.addEventListener('click', function() {
+                        playPaperTurnSound();
+                        pageSheet.classList.remove('flipping-in');
+                        pageSheet.classList.add('flipping-out');
+                        setTimeout(function() { window.history.back(); }, 940);
+                    });
+                }
+
+                if (btnNext) {
+                    btnNext.addEventListener('click', function() {
+                        playPaperTurnSound();
+                        pageSheet.classList.remove('flipping-in');
+                        pageSheet.classList.add('flipping-out');
+                        setTimeout(function() { window.history.forward(); }, 940);
+                    });
+                }
+
+                if (dogEar) {
+                    dogEar.addEventListener('click', function() {
+                        playPaperTurnSound();
+                        pageSheet.classList.add('flipping-out');
+                        setTimeout(function() {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            pageSheet.classList.remove('flipping-out');
+                            pageSheet.classList.add('flipping-in');
+                            setTimeout(function() { pageSheet.classList.remove('flipping-in'); }, 1050);
+                        }, 920);
+                    });
+                }
+
+                // Brauzer "Orqaga / Oldinga" tugmalari bosilganda sahifa saqlanib qolsa
+                window.addEventListener('pageshow', function(event) {
+                    if (pageSheet) {
+                        pageSheet.classList.remove('flipping-out');
+                        pageSheet.classList.remove('flipping-in');
+                    }
+                });
+            })();
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

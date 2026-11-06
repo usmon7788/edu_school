@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.edit_profile }} - {{ t.school_portal }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Sahifa sarlavhasi -->
+    <div class="page-header-box anim-1">
+        <div>
+            <h1 class="page-header-title">
+                <i class="fa-solid fa-user-gear text-primary me-2"></i> {{ t.edit_profile }}
+            </h1>
+            <p class="page-header-subtitle">{{ t.profile_edit_subtitle }}</p>
+        </div>
+    </div>
+
+    <div class="row g-4 anim-2">
+        <!-- Chap taraf: Profil kartochkasi -->
+        <div class="col-lg-4">
+            <div class="card card-modern p-4 text-center shadow-sm border-0">
+                <div class="position-relative d-inline-block mx-auto mb-3">
+                    {% if user_obj.avatar and user_obj.avatar.name %}
+                        <img src="{{ user_obj.avatar.url }}" alt="{{ user_obj.full_name }}" class="avatar-lg shadow-lg">
+                    {% else %}
+                        <div class="avatar-lg bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-1 shadow-lg mx-auto">
+                            {{ user_obj.first_name|default:user_obj.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <h4 class="fw-bold text-dark mb-1">{{ user_obj.full_name }}</h4>
+                <p class="text-muted small mb-2">@{{ user_obj.username }}</p>
+
+                <div class="badge bg-primary-light text-primary px-3 py-1 rounded-pill fw-bold mb-3">
+                    {{ user_obj.role|t_role:current_lang }}
+                </div>
+
+                <hr class="my-3">
+
+                <div class="text-start small d-flex flex-column gap-2 text-muted">
+                    <div class="d-flex justify-content-between align-items-center pb-2 border-bottom">
+                        <span><i class="fa-solid fa-school text-primary me-2"></i> {{ t.school_name }}:</span>
+                        <strong class="text-dark">{{ t.school_num_prefix }} {{ user_obj.school.number|default:"-" }}</strong>
+                    </div>
+                    {% if user_obj.classroom %}
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom">
+                            <span><i class="fa-solid fa-chalkboard text-info me-2"></i> {{ t.class_room }}:</span>
+                            <strong class="text-primary">{{ user_obj.classroom.name }}</strong>
+                        </div>
+                    {% endif %}
+                    {% if user_obj.phone %}
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom">
+                            <span><i class="fa-solid fa-phone text-success me-2"></i> {{ t.phone }}:</span>
+                            <strong class="text-dark">{{ user_obj.phone }}</strong>
+                        </div>
+                    {% endif %}
+                    {% if user_obj.birth_date %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-cake-candles text-warning me-2"></i> {{ t.birth_date }}:</span>
+                            <strong class="text-dark">{{ user_obj.birth_date|date:"d.m.Y" }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- O'ng taraf: Tahrirlash formalari -->
+        <div class="col-lg-8">
+            <!-- Asosiy ma'lumotlar va rasm o'zgartirish -->
+            <div class="card card-modern p-4 mb-4 shadow-sm border-0">
+                <h5 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-user-pen text-primary me-2"></i> {{ t.personal_info }}
+                </h5>
+                <p class="text-muted small mb-4">{{ t.update_profile }}</p>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="update_profile" value="1">
+
+                    <!-- Profil rasmi (Avatar yuklash) -->
+                    <div class="mb-4 p-3 bg-light rounded-3 border">
+                        <label class="form-label fw-bold text-dark mb-1">
+                            <i class="fa-solid fa-camera text-primary me-1"></i> {{ t.avatar }}
+                        </label>
+                        {{ form.avatar }}
+                        <div class="form-text small text-muted">{{ t.avatar_hint }}</div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold small text-secondary">{{ t.first_name }}</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold small text-secondary">{{ t.last_name }}</label>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold small text-secondary">{{ t.phone }}</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold small text-secondary">{{ t.birth_date }}</label>
+                            {{ form.birth_date }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">{{ t.address }}</label>
+                        {{ form.address }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">{{ t.bio }}</label>
+                        {{ form.bio }}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-custom px-4">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> {{ t.save }}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Parolni o'zgartirish bo'limi -->
+            <div class="card card-modern p-4 shadow-sm border-0">
+                <h5 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-lock text-warning me-2"></i> {{ t.change_password }}
+                </h5>
+                <p class="text-muted small mb-3">{{ t.change_password_hint }}</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="change_password" value="1">
+
+                    <div class="row g-3">
+                        <div class="col-12 mb-2">
+                            <label class="form-label fw-semibold small text-secondary">{% if current_lang == 'ru' %}Текущий пароль{% elif current_lang == 'en' %}Current Password{% else %}Joriy parol{% endif %}</label>
+                            <input type="password" name="old_password" class="form-control" placeholder="••••••••" required>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label fw-semibold small text-secondary">{% if current_lang == 'ru' %}Новый пароль{% elif current_lang == 'en' %}New Password{% else %}Yangi parol{% endif %}</label>
+                            <input type="password" name="new_password1" class="form-control" placeholder="••••••••" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold small text-secondary">{{ t.confirm_password }}</label>
+                            <input type="password" name="new_password2" class="form-control" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-warning px-4 fw-semibold rounded-pill mt-2">
+                        <i class="fa-solid fa-key me-2"></i> {{ t.change_password }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

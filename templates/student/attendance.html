@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.attendance }} - {{ t.student_portal }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+    <!-- Sahifa sarlavhasi -->
+    <div class="page-header-box anim-1 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-header-title mb-1">
+                <i class="fa-solid fa-user-check text-primary me-2"></i> {{ t.attendance }}
+            </h1>
+            <p class="page-header-subtitle mb-0">{{ t.student_attendance_subtitle }}</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success-subtle text-success fs-6 px-4 py-2 rounded-pill border border-success-subtle fw-bold">
+                <i class="fa-solid fa-chart-pie me-1"></i> {{ t.attendance_rate }}: {{ attendance_percentage }}%
+            </span>
+        </div>
+    </div>
+
+    <!-- 4 ta Status Kartochkalari -->
+    <div class="row g-3 mb-4 anim-2">
+        <div class="col-6 col-md-3">
+            <div class="card card-modern card-lift p-3 border-start border-4 border-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold">{{ t.present }}</span>
+                        <h3 class="fw-bold text-success mt-1 mb-0">{{ present_cnt }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper bg-success-subtle text-success">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card card-modern card-lift p-3 border-start border-4 border-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold">{{ t.absent }}</span>
+                        <h3 class="fw-bold text-danger mt-1 mb-0">{{ absent_cnt }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper bg-danger-subtle text-danger">
+                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card card-modern card-lift p-3 border-start border-4 border-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold">{{ t.excused }}</span>
+                        <h3 class="fw-bold text-warning mt-1 mb-0">{{ excused_cnt }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper bg-warning-subtle text-warning">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card card-modern card-lift p-3 border-start border-4 border-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold">{{ t.late }}</span>
+                        <h3 class="fw-bold text-info mt-1 mb-0">{{ late_cnt }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper bg-info-subtle text-info">
+                        <i class="fa-regular fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fanlar bo'yicha davomat foizlari (Per-subject breakdown) -->
+    {% if subject_stats %}
+    <div class="card card-modern p-4 mb-4 border-0 shadow-sm anim-2">
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+            <i class="fa-solid fa-layer-group text-primary"></i>
+            {{ t.attendance_by_subject }}
+        </h6>
+        <div class="row g-3">
+            {% for s in subject_stats %}
+            <div class="col-md-4 col-sm-6">
+                <div class="p-3 rounded-3 border" style="background:var(--bg-card-hover);">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="small">{{ s.subject.name|t_sub:current_lang }}</strong>
+                        <span class="badge {% if s.percentage >= 90 %}bg-success{% elif s.percentage >= 75 %}bg-primary{% elif s.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %} rounded-pill">
+                            {{ s.percentage }}%
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted" style="font-size:0.75rem;">
+                        <span>{{ t.present }}: {{ s.present }}/{{ s.total }}</span>
+                        <span>{{ s.total }} {{ t.total_lessons|lower }}</span>
+                    </div>
+                    <div class="progress-slim mt-2">
+                        <div class="progress-bar {% if s.percentage >= 90 %}bg-success{% elif s.percentage >= 75 %}bg-primary{% elif s.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                             style="width: {{ s.percentage }}%;"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Davomat jurnali jadvali va Fan filteri -->
+    <div class="card card-modern p-4 border-0 shadow-sm anim-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h5 class="fw-bold mb-0">
+                <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> {{ t.attendance }} {{ t.recent_grades_history|lower }}
+            </h5>
+            <!-- Filter by subject -->
+            <form method="get" class="d-flex align-items-center gap-2">
+                <select name="subject_id" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 180px;">
+                    <option value="">-- {{ t.all_subjects }} --</option>
+                    {% for sub in subjects %}
+                    <option value="{{ sub.id }}" {% if selected_subject_id == sub.id %}selected{% endif %}>
+                        {{ sub.name|t_sub:current_lang }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if selected_subject_id %}
+                <a href="{% url 'student_attendance' %}" class="btn btn-outline-secondary btn-sm rounded-pill text-nowrap">
+                    <i class="fa-solid fa-xmark"></i>
+                </a>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="table-modern-wrapper">
+            <table class="table-modern table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ t.date }}</th>
+                        <th>{{ t.subject }}</th>
+                        <th>{{ t.teacher_label }}</th>
+                        <th>{{ t.status }}</th>
+                        <th>{{ t.comment }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for att in attendances %}
+                        <tr>
+                            <td class="fw-bold">
+                                <i class="fa-regular fa-calendar me-1 text-muted"></i> {{ att.date|date:"d.m.Y" }}
+                            </td>
+                            <td>
+                                {% if att.subject %}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold px-3 py-1 rounded-pill">
+                                        <i class="fa-solid fa-book-bookmark me-1"></i> {{ att.subject.name|t_sub:current_lang }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="small fw-medium">{{ att.teacher.full_name|default:"—" }}</span>
+                            </td>
+                            <td>
+                                {% if att.status == 'present' %}
+                                    <span class="badge-status badge-present"><i class="fa-solid fa-check"></i> {{ t.present }}</span>
+                                {% elif att.status == 'absent' %}
+                                    <span class="badge-status badge-absent"><i class="fa-solid fa-xmark"></i> {{ t.absent }}</span>
+                                {% elif att.status == 'excused' %}
+                                    <span class="badge-status badge-excused"><i class="fa-solid fa-info"></i> {{ t.excused }}</span>
+                                {% else %}
+                                    <span class="badge-status badge-late"><i class="fa-regular fa-clock"></i> {{ t.late }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small">{{ att.note|default:"—" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-clipboard-check fs-2 opacity-50 mb-2 d-block"></i>
+                                <p class="mb-0 fw-medium">{{ t.no_attendance_records }}</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.timetable }} - {{ t.student_portal }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+    <!-- Sahifa sarlavhasi -->
+    <div class="page-header-box">
+        <div>
+            <h1 class="page-header-title">
+                <i class="fa-solid fa-calendar-days text-primary"></i> {{ t.timetable }}
+            </h1>
+            <p class="page-header-subtitle">{{ classroom.name|default:"Sinf" }} {{ t.my_schedule|lower }}</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary text-white px-3 py-2 fw-bold rounded-pill shadow-sm">
+                <i class="fa-solid fa-calendar-check me-1"></i> {{ t.today }}: {{ today_weekday|t_day:current_lang }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Haftalik dars jadvali (6 kun) -->
+    <div class="row g-4">
+        {% for day in days_data %}
+            <div class="col-md-6 col-xl-4">
+                <div class="card card-modern h-100 {% if day.day_num == today_weekday %}timetable-day-today{% else %}timetable-day-card{% endif %} p-4">
+                    <!-- Kun sarlavhasi -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-calendar-day text-primary"></i> {{ day.day_num|t_day:current_lang }}
+                        </h5>
+                        {% if day.day_num == today_weekday %}
+                            <span class="badge bg-success text-white px-3 py-1 rounded-pill small fw-bold">
+                                <i class="fa-solid fa-circle-dot me-1"></i> {{ t.today }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Darslar ro'yxati -->
+                    <div class="d-flex flex-column gap-2 flex-grow-1">
+                        {% if day.lessons %}
+                            {% for lesson in day.lessons %}
+                                <div class="timeline-item d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary text-white rounded-pill px-2 py-1 fw-bold" style="font-size: 0.75rem; min-width: 24px;">
+                                            {{ lesson.lesson_number }}
+                                        </span>
+                                        <div>
+                                            <div class="fw-bold text-dark small">{{ lesson.subject.name|t_sub:current_lang }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">
+                                                <i class="fa-solid fa-user-tie text-secondary me-1"></i> {{ lesson.teacher.full_name|default:"Ustoz" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.75rem;">
+                                            {{ lesson.room_number|default:"-" }}-{{ t.room|lower }}
+                                        </span>
+                                        {% if lesson.start_time %}
+                                            <div class="text-muted fw-semibold mt-1" style="font-size: 0.7rem;">
+                                                {{ lesson.start_time|time:"H:i" }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5 text-muted my-auto">
+                                <i class="fa-solid fa-bed fs-2 text-secondary opacity-50 mb-2"></i>
+                                <p class="small mb-0 fw-medium">{{ t.no_lessons_day }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

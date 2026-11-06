@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ classroom.name }} - {{ t.manage_class }} - {{ t.admin_panel }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+    <!-- Orqaga qaytish havolasi -->
+    <div class="mb-3">
+        <a href="{% url 'admin_panel_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i> {{ t.back }} ({{ t.admin_panel }})
+        </a>
+    </div>
+
+    <!-- Sinf Bosh sarlavhasi va 28 limit holati -->
+    <div class="card card-modern p-4 mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
+        <div class="row align-items-center g-3">
+            <div class="col">
+                <span class="badge bg-primary px-3 py-1 rounded-pill mb-2">
+                    {{ t.school_num_prefix }} {{ classroom.school.number }} &bull; {{ classroom.school.name }}
+                </span>
+                <h2 class="fw-bold mb-1 text-white">{{ classroom.name }} {{ t.class_room|lower }}</h2>
+                <div class="d-flex flex-wrap gap-3 text-white-50 small mt-2">
+                    <span>
+                        <i class="fa-solid fa-users text-primary me-1"></i> 
+                        {{ t.students_count }}: <strong>{{ current_count }} / {{ max_capacity }}</strong>
+                    </span>
+                    <span>
+                        <i class="fa-solid fa-chair text-info me-1"></i> 
+                        {{ t.seats_left }}: <strong>{{ available_seats }}</strong>
+                    </span>
+                </div>
+            </div>
+            <div class="col-auto">
+                {% if is_full %}
+                    <span class="badge bg-danger fs-6 px-3 py-2">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ t.class_full }}
+                    </span>
+                {% else %}
+                    <span class="badge bg-success fs-6 px-3 py-2">
+                        <i class="fa-solid fa-circle-check me-1"></i> {{ available_seats }} {{ t.seats_left }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- 1. USTOZNI BIRIKTIRISH / ALMASHTIRISH -->
+        <div class="col-lg-6">
+            <div class="card card-modern p-4 h-100 shadow-sm border-0">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="fa-solid fa-user-tie text-primary me-2"></i> 
+                    {{ t.change_teacher }} / {{ t.assign_teacher }}
+                </h5>
+                <p class="text-muted small mb-3">
+                    {{ t.curator_manage_hint }}
+                </p>
+
+                <!-- Joriy ustoz holati -->
+                <div class="p-3 bg-light rounded-3 mb-3 border d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted d-block">{{ t.class_teacher }}:</small>
+                        <strong class="text-dark fs-6">
+                            {% if classroom.class_teacher %}
+                                {{ classroom.class_teacher.full_name }} (@{{ classroom.class_teacher.username }})
+                            {% else %}
+                                <span class="text-danger">{{ t.unassigned }}</span>
+                            {% endif %}
+                        </strong>
+                    </div>
+                    {% if classroom.class_teacher %}
+                        <form method="post" action="{% url 'change_class_teacher' classroom.id %}" onsubmit="return confirm('{{ t.confirm_remove_teacher }}')">
+                            {% csrf_token %}
+                            <input type="hidden" name="teacher_id" value="remove">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fa-solid fa-user-xmark me-1"></i> {{ t.remove }}
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+
+                <!-- Ustozni tanlash yoki almashtirish formasi -->
+                <form method="post" action="{% url 'change_class_teacher' classroom.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">
+                            {% if classroom.class_teacher %}{{ t.change_teacher }}:{% else %}{{ t.assign_teacher }}:{% endif %}
+                        </label>
+                        <select name="teacher_id" class="form-select" required>
+                            <option value="">-- {{ t.curator_select }} --</option>
+                            {% for teacher in teachers %}
+                                <option value="{{ teacher.id }}" {% if classroom.class_teacher.id == teacher.id %}selected{% endif %}>
+                                    {{ teacher.full_name }} ({{ teacher.subject.name|t_sub:current_lang|default:t.unassigned }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-custom w-100">
+                        <i class="fa-solid fa-arrows-rotate me-2"></i> 
+                        {% if classroom.class_teacher %}{{ t.change_teacher }}{% else %}{{ t.assign_teacher }}{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. O'QUVCHI QO'SHISH (28 nafar limit bilan) -->
+        <div class="col-lg-6">
+            <div class="card card-modern p-4 h-100 shadow-sm border-0">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="fa-solid fa-user-plus text-success me-2"></i> 
+                        {{ t.add_student }}
+                    </h5>
+                    <span class="badge {% if is_full %}bg-danger{% else %}bg-primary{% endif %}">
+                        {{ current_count }} / {{ max_capacity }}
+                    </span>
+                </div>
+                <p class="text-muted small mb-3">
+                    {{ t.notice_28_limit }}
+                </p>
+
+                {% if is_full %}
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-0">
+                        <i class="fa-solid fa-triangle-exclamation fs-3"></i>
+                        <div>
+                            <strong>{{ t.class_full }}!</strong> {{ t.class_full_hint }}
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Yangi o'quvchi yaratish formasi -->
+                    <form method="post" action="{% url 'add_student_to_class' classroom.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_type" value="create_new">
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <input type="text" name="first_name" id="clsStudentFirst" class="form-control form-control-sm" placeholder="{{ t.first_name }} *" required>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="last_name" class="form-control form-control-sm" placeholder="{{ t.last_name }} *" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <input type="text" name="username" id="clsStudentUser" class="form-control form-control-sm" placeholder="{{ t.username }} *" required>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="password" id="clsStudentPass" class="form-control form-control-sm" placeholder="{{ t.password }} *" value="123456" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-flex gap-2">
+                            <input type="text" name="phone" class="form-control form-control-sm" placeholder="{{ t.phone }}">
+                            <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" id="btnClsGenLogin">
+                                <i class="fa-solid fa-dice"></i> Random
+                            </button>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 fw-semibold">
+                            <i class="fa-solid fa-plus me-1"></i> {{ t.add_student }}
+                        </button>
+                    </form>
+
+                    <!-- Agar erkin o'quvchilar bo'lsa -->
+                    {% if unassigned_students %}
+                        <hr class="my-3">
+                        <form method="post" action="{% url 'add_student_to_class' classroom.id %}" class="d-flex gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="action_type" value="assign_existing">
+                            <select name="student_id" class="form-select form-select-sm" required>
+                                <option value="">-- {{ t.select_unassigned_student }} --</option>
+                                {% for st in unassigned_students %}
+                                    <option value="{{ st.id }}">{{ st.full_name }} (@{{ st.username }})</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-outline-primary btn-sm text-nowrap">{{ t.assign_teacher }}</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. O'QUVCHILAR RO'YXATI VA CHIQARIB YUBORISH -->
+    <div class="card card-modern p-4 shadow-sm border-0">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold text-dark mb-0">
+                    <i class="fa-solid fa-address-book text-primary me-2"></i> 
+                    {{ t.students_count }}: {{ current_count }} {{ t.seats_count_suffix }}
+                </h5>
+                <small class="text-muted">{{ t.students_manage_hint }}</small>
+            </div>
+            <div class="limit-pill {% if is_full %}limit-full{% elif current_count >= 24 %}limit-warning{% else %}limit-ok{% endif %}">
+                {{ t.occupancy_label }} {{ current_count }} / {{ max_capacity }}
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ t.full_name }}</th>
+                        <th>{{ t.username }}</th>
+                        <th>{{ t.phone }}</th>
+                        <th>{{ t.address }}</th>
+                        <th class="text-end">{{ t.actions }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if student.avatar %}
+                                        <img src="{{ student.avatar.url }}" alt="{{ student.full_name }}" class="avatar-img" style="width: 32px; height: 32px; border-radius:50%;">
+                                    {% else %}
+                                        <div class="avatar-img d-inline-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem; border-radius:50%;">
+                                            {{ student.first_name|default:student.username|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <span class="fw-bold text-dark">{{ student.full_name }}</span>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-muted border">@{{ student.username }}</span></td>
+                            <td class="text-muted small">{{ student.phone|default:"-" }}</td>
+                            <td class="text-muted small">{{ student.address|default:"-" }}</td>
+                            <td class="text-end">
+                                <!-- Sinfdan chiqarish -->
+                                <form method="post" action="{% url 'remove_student_from_class' classroom.id student.id %}" class="d-inline" onsubmit="return confirm('{{ t.confirm_remove_student }}')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="unassign">
+                                    <button type="submit" class="btn btn-outline-warning btn-sm me-1" title="{{ t.remove }}">
+                                        <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> {{ t.remove }}
+                                    </button>
+                                </form>
+
+                                <!-- Tizimdan to'liq chiqarib yuborish (o'chirish) -->
+                                <form method="post" action="{% url 'remove_student_from_class' classroom.id student.id %}" class="d-inline" onsubmit="return confirm('{{ t.confirm_delete_student }}')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="{{ t.delete }}">
+                                        <i class="fa-solid fa-trash-can me-1"></i> {{ t.delete }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                {{ t.no_students_in_class_detail }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('btnClsGenLogin')?.addEventListener('click', function() {
+        const first = document.getElementById('clsStudentFirst')?.value.trim() || 'student';
+        const clean = first.toLowerCase().replace(/[^a-z0-9]/g, '') || 'student';
+        const randNum = Math.floor(1000 + Math.random() * 9000);
+        const randPass = Math.floor(100000 + Math.random() * 900000);
+        document.getElementById('clsStudentUser').value = clean + '_' + randNum;
+        document.getElementById('clsStudentPass').value = randPass;
+    });
+</script>
+{% endblock %}

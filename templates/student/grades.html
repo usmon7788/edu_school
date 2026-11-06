@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.grades }} - {{ t.student_portal }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+    <!-- Sahifa sarlavhasi -->
+    <div class="page-header-box">
+        <div>
+            <h1 class="page-header-title">
+                <i class="fa-solid fa-award text-primary"></i> {{ t.grades }}
+            </h1>
+            <p class="page-header-subtitle">{{ t.student_grades_subtitle }}</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2 p-2 px-3 bg-light rounded-pill border">
+                <span class="text-muted small fw-semibold">{{ t.average_grade }}:</span>
+                <span class="badge bg-primary fs-6 px-3 py-1 rounded-pill">{{ total_avg|default:"0.0" }} / 5.0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fanlar bo'yicha ko'rsatkichlar kartalari -->
+    <div class="row g-3 mb-4">
+        {% for item in subjects_stats %}
+            <div class="col-md-6 col-xl-4">
+                <div class="card card-modern card-lift p-4 h-100 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0">{{ item.subject.name|t_sub:current_lang }}</h5>
+                        <span class="badge bg-primary-light text-primary fw-bold px-3 py-1 rounded-pill fs-6">
+                            {{ item.avg }} {{ t.points_suffix }}
+                        </span>
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div class="mb-3">
+                        <div class="progress-slim">
+                            <div class="progress-bar bg-primary" style="width: {% widthratio item.avg 5 100 %}%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Baholar ro'yxati -->
+                    <div class="d-flex flex-wrap gap-2 my-2 flex-grow-1 align-content-start">
+                        {% for g in item.grades %}
+                            <span class="grade-badge grade-{{ g.grade }}" title="{{ g.date|date:'d.m.Y' }} - {{ g.comment|default:t.regular_grade }}">
+                                {{ g.grade }}
+                            </span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3 small text-muted">
+                        <span>{{ t.total_grades_count }}</span>
+                        <strong class="text-dark">{{ item.count }} {{ t.grades_count_suffix }}</strong>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card card-modern p-5 text-center text-muted">
+                    <i class="fa-solid fa-graduation-cap fs-1 text-primary opacity-50 mb-2"></i>
+                    <h5>{{ t.no_grades_student }}</h5>
+                    <p class="small mb-0">{{ t.no_grades_student_hint }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- To'liq baholar jadvali -->
+    <div class="card card-modern p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold text-dark mb-0">
+                    <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> {{ t.all_grades_history }}
+                </h5>
+                <small class="text-muted">{{ t.all_grades_history_desc }}</small>
+            </div>
+        </div>
+
+        <div class="table-modern-wrapper">
+            <table class="table-modern table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ t.date }}</th>
+                        <th>{{ t.subject }}</th>
+                        <th>{{ t.grades }}</th>
+                        <th>{{ t.comment }}</th>
+                        <th>{{ t.teacher_label }}</th>
+                        <th class="text-end">Chatga ulashish</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for g in grades %}
+                        <tr>
+                            <td class="text-muted small fw-semibold">
+                                <i class="fa-regular fa-calendar me-1"></i> {{ g.date|date:"d.m.Y" }}
+                            </td>
+                            <td>
+                                <span class="fw-bold text-dark">{{ g.subject.name|t_sub:current_lang }}</span>
+                            </td>
+                            <td>
+                                <span class="grade-badge grade-{{ g.grade }}">{{ g.grade }}</span>
+                            </td>
+                            <td class="text-muted small">{{ g.comment|default:t.regular_grade }}</td>
+                            <td class="text-muted small">
+                                <i class="fa-solid fa-user-tie text-secondary me-1"></i> {{ g.teacher.full_name }}
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1 shadow-sm" onclick="openGradeShareModal({{ g.id }}, '{{ g.subject.name|escapejs }}', {{ g.grade }}, '{{ g.date|date:'d.m.Y' }}')">
+                                    <i class="fa-solid fa-paper-plane"></i> <span>Ulashish</span>
+                                </button>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <p class="mb-0 fw-medium">{{ t.no_grades_student }}</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     TELEGRAM USLUBIDAGI BAHONI CHATGA ULASHISH MODALI
+     ========================================== -->
+<div class="modal fade telegram-share-modal" id="gradeShareModal" tabindex="-1" aria-labelledby="gradeShareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="telegram-share-header">
+                <div class="telegram-share-title">
+                    <i class="fa-brands fa-telegram text-primary fs-4"></i>
+                    <span>Bahoni ulashish</span>
+                    <span class="badge bg-primary rounded-pill small ms-2 d-none" id="telegramGradeSelectedCountBadge">0 ta tanlandi</span>
+                </div>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Tanlangan baho miniatyurasi -->
+            <div class="px-4 py-2">
+                <div class="d-flex align-items-center gap-3 p-2 px-3 rounded-3" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15);">
+                    <div id="shareGradeBadge" class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-5 shadow-sm" style="width: 38px; height: 38px; background: linear-gradient(135deg, #10b981, #059669); flex-shrink: 0;">
+                        5
+                    </div>
+                    <div class="text-truncate">
+                        <strong class="d-block small text-dark text-truncate" id="shareGradeSubject">Fan nomi</strong>
+                        <span class="text-muted" style="font-size:0.75rem;" id="shareGradeDate">Sana: -</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Qidiruv Maydoni (Telegram kabi) -->
+            <div class="telegram-search-box">
+                <i class="fa-solid fa-magnifying-glass telegram-search-icon"></i>
+                <input type="text" id="shareGradeContactSearch" class="telegram-search-input" placeholder="Qidirish (ism yoki fan bo'yicha)...">
+            </div>
+
+            <!-- Tepadagi Tezkor Kontaktlar (Horizontal Stories/Avatars) -->
+            <div class="telegram-stories-row" id="telegramGradeStoriesRow">
+                <!-- JS orqali to'ldiriladi -->
+            </div>
+
+            <!-- Filtr Tablari -->
+            <div class="telegram-tabs-row">
+                <button type="button" class="telegram-tab-btn active" data-tab="all" onclick="filterGradeShareContacts('all', this)">Barchasi</button>
+                <button type="button" class="telegram-tab-btn" data-tab="teachers" onclick="filterGradeShareContacts('teachers', this)">Ustozlar</button>
+                <button type="button" class="telegram-tab-btn" data-tab="classmates" onclick="filterGradeShareContacts('classmates', this)">Sinfdoshlar</button>
+                <button type="button" class="telegram-tab-btn" data-tab="online" onclick="filterGradeShareContacts('online', this)">🟢 Online</button>
+            </div>
+
+            <!-- Kontaktlar Ro'yxati (Telegram ro'yxati) -->
+            <div class="telegram-contacts-list" id="shareGradeContactsList">
+                <div class="text-center py-4 text-muted small">
+                    <i class="fa-solid fa-spinner fa-spin me-1"></i> Kontaktlar yuklanmoqda...
+                </div>
+            </div>
+
+            <!-- Telegram Pastki Yuborish Paneli -->
+            <div class="telegram-share-footer">
+                <input type="text" id="shareGradeComment" class="telegram-comment-input" placeholder="Xabar yozing (ixtiyoriy)...">
+                <button type="button" class="telegram-send-btn" id="telegramGradeSendBtn" onclick="submitTelegramGradeShare()" title="Yuborish" disabled>
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span class="telegram-selected-badge d-none" id="telegramGradeSendCountBadge">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+
+<script>
+let currentShareGradeId = null;
+let cachedGradeShareContacts = [];
+let selectedGradeContactIds = new Set();
+let currentGradeFilterTab = 'all';
+
+function openGradeShareModal(gradeId, subjectName, gradeValue, dateStr) {
+    currentShareGradeId = gradeId;
+    selectedGradeContactIds.clear();
+    updateGradeSelectedStateUI();
+    document.getElementById('shareGradeSubject').textContent = subjectName;
+    document.getElementById('shareGradeDate').textContent = "Sana: " + dateStr;
+    const badge = document.getElementById('shareGradeBadge');
+    badge.textContent = gradeValue;
+    if (gradeValue >= 5) {
+        badge.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    } else if (gradeValue === 4) {
+        badge.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+    } else {
+        badge.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+    }
+    document.getElementById('shareGradeComment').value = '';
+    const searchInput = document.getElementById('shareGradeContactSearch');
+    if (searchInput) searchInput.value = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('gradeShareModal'));
+    modal.show();
+
+    if (cachedGradeShareContacts.length === 0) {
+        fetch('/chat/api/share-contacts/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    cachedGradeShareContacts = data.contacts;
+                    renderTelegramGradeStories(cachedGradeShareContacts);
+                    renderGradeShareContacts(cachedGradeShareContacts);
+                }
+            })
+            .catch(() => {
+                document.getElementById('shareGradeContactsList').innerHTML = '<div class="text-center text-muted py-3">Kontaktlarni yuklab bo\'lmadi</div>';
+            });
+    } else {
+        renderTelegramGradeStories(cachedGradeShareContacts);
+        renderGradeShareContacts(cachedGradeShareContacts);
+    }
+}
+
+function renderTelegramGradeStories(contacts) {
+    const row = document.getElementById('telegramGradeStoriesRow');
+    if (!row) return;
+
+    if (!contacts || contacts.length === 0) {
+        row.style.display = 'none';
+        return;
+    }
+    row.style.display = 'flex';
+
+    const topContacts = contacts.slice(0, 12);
+    let html = '';
+    topContacts.forEach(c => {
+        const isSelected = selectedGradeContactIds.has(c.id);
+        const avatarHtml = c.avatar 
+            ? `<img src="${c.avatar}" class="telegram-story-avatar-img">`
+            : `<div class="telegram-story-avatar-initials">${c.initial}</div>`;
+
+        html += `
+            <div class="telegram-story-item ${isSelected ? 'selected' : ''}" onclick="toggleSelectGradeContact(${c.id})" id="storyGradeItem_${c.id}">
+                <div class="telegram-story-avatar-wrap">
+                    ${avatarHtml}
+                    ${c.is_online ? '<span class="online-indicator-dot pulse" style="width:11px; height:11px; border:2px solid var(--bg-card); position:absolute; bottom:2px; right:2px;"></span>' : ''}
+                    <span class="telegram-story-check"><i class="fa-solid fa-check"></i></span>
+                </div>
+                <span class="telegram-story-name">${c.first_name}</span>
+            </div>
+        `;
+    });
+    row.innerHTML = html;
+}
+
+function filterGradeShareContacts(tab, btn) {
+    currentGradeFilterTab = tab;
+    document.querySelectorAll('#gradeShareModal .telegram-tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    applyGradeFilters();
+}
+
+function applyGradeFilters() {
+    const q = (document.getElementById('shareGradeContactSearch').value || '').toLowerCase().trim();
+
+    let filtered = cachedGradeShareContacts.filter(c => {
+        const matchesQuery = !q || c.name.toLowerCase().includes(q) || c.role.toLowerCase().includes(q);
+        if (!matchesQuery) return false;
+
+        if (currentGradeFilterTab === 'teachers') return c.role_type === 'teacher';
+        if (currentGradeFilterTab === 'classmates') return c.role_type === 'student';
+        if (currentGradeFilterTab === 'online') return c.is_online === true;
+        return true;
+    });
+
+    renderGradeShareContacts(filtered);
+}
+
+function renderGradeShareContacts(contacts) {
+    const list = document.getElementById('shareGradeContactsList');
+    if (!contacts || contacts.length === 0) {
+        list.innerHTML = '<div class="text-center text-muted py-4 small">Hech kim topilmadi</div>';
+        return;
+    }
+
+    let html = '';
+    contacts.forEach(c => {
+        const isSelected = selectedGradeContactIds.has(c.id);
+        const avatarHtml = c.avatar 
+            ? `<img src="${c.avatar}" class="telegram-contact-avatar-img">`
+            : `<div class="telegram-contact-avatar-initials">${c.initial}</div>`;
+
+        const statusText = c.is_online 
+            ? `<span class="telegram-contact-sub online"><i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> online</span>`
+            : `<span class="telegram-contact-sub">${c.last_seen || c.role}</span>`;
+
+        html += `
+            <div class="telegram-contact-row ${isSelected ? 'selected' : ''}" onclick="toggleSelectGradeContact(${c.id})" id="contactGradeRow_${c.id}">
+                <div class="telegram-contact-left">
+                    <div class="telegram-contact-avatar-wrap">
+                        ${avatarHtml}
+                        ${c.is_online ? '<span class="online-indicator-dot pulse" style="width:11px; height:11px; border:2px solid var(--bg-card); position:absolute; bottom:1px; right:1px;"></span>' : ''}
+                    </div>
+                    <div class="telegram-contact-info">
+                        <div class="telegram-contact-name">${c.name}</div>
+                        <div>${c.role} &bull; ${statusText}</div>
+                    </div>
+                </div>
+                <div class="telegram-checkbox">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function toggleSelectGradeContact(id) {
+    if (selectedGradeContactIds.has(id)) {
+        selectedGradeContactIds.delete(id);
+    } else {
+        selectedGradeContactIds.add(id);
+    }
+
+    // Row update
+    const row = document.getElementById('contactGradeRow_' + id);
+    if (row) {
+        if (selectedGradeContactIds.has(id)) row.classList.add('selected');
+        else row.classList.remove('selected');
+    }
+
+    // Story item update
+    const story = document.getElementById('storyGradeItem_' + id);
+    if (story) {
+        if (selectedGradeContactIds.has(id)) story.classList.add('selected');
+        else story.classList.remove('selected');
+    }
+
+    updateGradeSelectedStateUI();
+}
+
+function updateGradeSelectedStateUI() {
+    const count = selectedGradeContactIds.size;
+    const sendBtn = document.getElementById('telegramGradeSendBtn');
+    const countBadge = document.getElementById('telegramGradeSelectedCountBadge');
+    const sendCountBadge = document.getElementById('telegramGradeSendCountBadge');
+
+    if (count > 0) {
+        sendBtn.disabled = false;
+        countBadge.classList.remove('d-none');
+        countBadge.textContent = `${count} ta tanlandi`;
+        sendCountBadge.classList.remove('d-none');
+        sendCountBadge.textContent = count;
+    } else {
+        sendBtn.disabled = true;
+        countBadge.classList.add('d-none');
+        sendCountBadge.classList.add('d-none');
+    }
+}
+
+document.getElementById('shareGradeContactSearch').addEventListener('input', applyGradeFilters);
+
+function submitTelegramGradeShare() {
+    if (!currentShareGradeId || selectedGradeContactIds.size === 0) return;
+
+    const btn = document.getElementById('telegramGradeSendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    const comment = document.getElementById('shareGradeComment').value.trim();
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    const formData = new FormData();
+    formData.append('receiver_ids', Array.from(selectedGradeContactIds).join(','));
+    formData.append('comment', comment);
+
+    fetch(`/student/grades/${currentShareGradeId}/share/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+            if (typeof showToast === 'function') {
+                showToast(data.message || "Baho muvaffaqiyatli ulashildi!");
+            }
+            setTimeout(() => {
+                const modalEl = document.getElementById('gradeShareModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                btn.style.background = '';
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+            }, 1000);
+        } else {
+            alert(data.message || "Xatolik yuz berdi");
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        }
+    })
+    .catch(() => {
+        alert("Tarmoq xatosi!");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+    });
+}
+</script>
+{% endblock %}

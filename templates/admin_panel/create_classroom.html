@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+{% block title %}{{ t.create_classroom }} - {{ t.admin_panel }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Page header -->
+    <div class="page-header-box anim-1">
+        <div>
+            <h1 class="page-header-title">
+                <i class="fa-solid fa-chalkboard text-info me-2"></i> {{ t.create_classroom }}
+            </h1>
+            <p class="page-header-subtitle">{{ t.create_classroom_subtitle }}</p>
+        </div>
+        <a href="{% url 'admin_panel_dashboard' %}" class="btn-secondary-custom">
+            <i class="fa-solid fa-arrow-left me-1"></i> {{ t.back }}
+        </a>
+    </div>
+
+    <div class="row g-4 anim-2 justify-content-center">
+        <!-- Form -->
+        <div class="col-lg-7 col-xl-6">
+            <div class="dash-card border-0 shadow-lg">
+                <div class="dash-card-header bg-light">
+                    <h5 class="dash-card-title">
+                        <span class="dash-card-title-icon" style="background:rgba(14,165,233,0.15);color:#0284c7;">
+                            <i class="fa-solid fa-users-rectangle"></i>
+                        </span>
+                        {{ t.class_info }}
+                    </h5>
+                </div>
+                <div class="dash-card-body p-4">
+                    <form method="post" id="classroomForm">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <!-- Sinf nomi -->
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold small text-secondary">
+                                    {{ t.class_name }} <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-chalkboard"></i></span>
+                                    <input type="text" name="name" class="form-control" placeholder="9-A, 10-B, 1-A" required>
+                                </div>
+                                <div class="form-text">{{ t.class_name_hint }}</div>
+                            </div>
+
+                            <!-- Sinf bosqichi -->
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold small text-secondary">
+                                    {{ t.grade_level }} <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-layer-group"></i></span>
+                                    <select name="grade_level" class="form-select" required>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9" selected>9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Maktab tanlash -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small text-secondary">
+                                    {{ t.school_name }} <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-school"></i></span>
+                                    <select name="school_id" class="form-select" required>
+                                        <option value="">— {{ t.select_school }} —</option>
+                                        {% for s in schools %}
+                                        <option value="{{ s.id }}">{{ t.school_num_prefix }} {{ s.number }}: {{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Kurator (Sinf rahbari) -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small text-secondary">
+                                    {{ t.curator_select }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-user-tie"></i></span>
+                                    <select name="teacher_id" class="form-select">
+                                        <option value="">— {{ t.curator_optional }} —</option>
+                                        {% for teacher in teachers %}
+                                        <option value="{{ teacher.id }}">
+                                            {{ teacher.full_name }} {% if teacher.subject %}({{ teacher.subject.name|t_sub:current_lang }}){% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">{{ t.curator_hint }}</div>
+                            </div>
+
+                            <!-- Maksimal sig'im (standart 28) -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small text-secondary">
+                                    {{ t.max_capacity_label }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-users"></i></span>
+                                    <input type="number" name="max_students" class="form-control" value="28" min="10" max="45" required>
+                                </div>
+                                <div class="form-text text-danger fw-semibold">
+                                    <i class="fa-solid fa-circle-info me-1"></i> {{ t.notice_28_limit }}
+                                </div>
+                            </div>
+
+                            <!-- Yaratish tugmasi -->
+                            <div class="col-12 mt-3">
+                                <button type="submit" class="btn btn-primary-custom w-100 py-3 fs-6 shadow-glow-primary">
+                                    <i class="fa-solid fa-plus me-2"></i> {{ t.create_classroom }}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

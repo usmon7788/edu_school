@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.login }} - {{ t.school_portal }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-5 col-xl-4">
+            <div class="card card-modern p-4 p-md-5 shadow-lg border-0" style="border-radius: 24px;">
+                <div class="text-center mb-4">
+                    <div class="brand-badge mb-3 mx-auto" style="width:68px;height:68px;font-size:2rem;border-radius:20px;background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; display:flex; align-items:center; justify-content:center; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.35);">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <h2 class="fw-bold mb-1" style="font-family: 'Outfit', sans-serif;">{{ t.welcome }}</h2>
+                    <p class="text-muted small mb-0">{{ t.welcome_subtitle }}</p>
+                </div>
+
+                <form method="post" novalidate id="loginForm" autocomplete="off">
+                    {% csrf_token %}
+                    <!-- Dummy inputs to thwart Chrome/Edge aggressive saved login filling -->
+                    <input type="text" name="fake_user_to_prevent_autofill" style="display:none;" tabindex="-1" autocomplete="off">
+                    <input type="password" name="fake_pass_to_prevent_autofill" style="display:none;" tabindex="-1" autocomplete="new-password">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">{{ t.username }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0 text-muted"><i class="fa-solid fa-at"></i></span>
+                            {{ form.username }}
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-secondary small">{{ t.password }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0 text-muted"><i class="fa-solid fa-lock"></i></span>
+                            {{ form.password }}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-custom w-100 py-3 fs-6 mb-3 shadow-glow-primary">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> {{ t.login }}
+                    </button>
+
+                    <!-- Notice: Accounts managed by school administration -->
+                    <div class="p-3 rounded-3 text-center notice-box" style="background: rgba(79, 70, 229, 0.06); border: 1px dashed rgba(79, 70, 229, 0.25);">
+                        <i class="fa-solid fa-shield-halved text-primary mb-1 d-block" style="font-size: 1.15rem;"></i>
+                        <span class="text-muted" style="font-size: 0.82rem; line-height: 1.45; display: block;">
+                            {{ t.login_credentials_hint }}
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Brauzer "abror" yoki boshqa saqlangan logini avtomatik chiqarib yubormasligi uchun tozalash
+    document.addEventListener('DOMContentLoaded', function () {
+        var userInp = document.querySelector('input[name="username"]');
+        var passInp = document.querySelector('input[name="password"]');
+        
+        function clearSavedAutofill() {
+            if (userInp && (userInp.value === 'abror' || userInp.value.toLowerCase() === 'abror')) {
+                userInp.value = '';
+                if (passInp) passInp.value = '';
+            }
+        }
+        
+        clearSavedAutofill();
+        setTimeout(clearSavedAutofill, 50);
+        setTimeout(clearSavedAutofill, 150);
+        setTimeout(clearSavedAutofill, 300);
+    });
+</script>
+{% endblock %}
+

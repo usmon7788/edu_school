@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.add_homework }} - {{ t.teacher_portal }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+    <!-- Sahifa sarlavhasi -->
+    <div class="page-header-box anim-1">
+        <div>
+            <h1 class="page-header-title">
+                <i class="fa-solid fa-file-circle-plus text-primary me-2"></i> {{ t.add_homework }}
+            </h1>
+            <p class="page-header-subtitle">{{ t.teacher_hw_subtitle }}</p>
+        </div>
+        <a href="{% url 'teacher_dashboard' %}" class="btn-secondary-custom">
+            <i class="fa-solid fa-arrow-left me-1"></i> {{ t.back }}
+        </a>
+    </div>
+
+    <div class="row g-4 anim-2">
+        <!-- Yangi vazifa yuklash formasi -->
+        <div class="col-lg-5">
+            <div class="card card-modern p-4 shadow-sm border-0">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="stat-icon-wrapper bg-primary-light text-primary" style="width: 40px; height: 40px; font-size: 1.1rem; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">{{ t.add_homework }}</h5>
+                        <small class="text-muted">{{ t.hw_details }}</small>
+                    </div>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">{{ t.select_classroom }} *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-chalkboard"></i></span>
+                            {{ form.classroom }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">{{ t.subject }} *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-book"></i></span>
+                            {{ form.subject }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">{{ t.hw_title_label }} *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-heading"></i></span>
+                            {{ form.title }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">{{ t.hw_desc_label }} *</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="mb-3 p-3 bg-light rounded-3 border">
+                        <label class="form-label fw-bold text-dark small mb-1">
+                            <i class="fa-solid fa-paperclip text-primary me-1"></i> {{ t.hw_file_label }}
+                        </label>
+                        {{ form.file }}
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">{{ t.due_date }} *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-regular fa-clock"></i></span>
+                            {{ form.due_date }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary-custom w-100 py-3 shadow-glow-primary">
+                        <i class="fa-solid fa-paper-plane me-2"></i> {{ t.add_homework }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Berilgan barcha vazifalar -->
+        <div class="col-lg-7">
+            <div class="card card-modern p-4 border-0 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-folder-open text-primary me-2"></i> {{ t.homework }}
+                        </h5>
+                        <small class="text-muted">{{ t.hw_all_assigned }}</small>
+                    </div>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                        {{ homeworks.count }} {{ t.hw_count_suffix }}
+                    </span>
+                </div>
+
+                <div class="table-modern-wrapper">
+                    <table class="table-modern table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>{{ t.class_room }}</th>
+                                <th>{{ t.subject }}</th>
+                                <th>{{ t.hw_title_label }}</th>
+                                <th>{{ t.due_date }}</th>
+                                <th>{{ t.file_attachment }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hw in homeworks %}
+                                <tr>
+                                    <td><span class="badge bg-primary text-white px-2 py-1 rounded-pill">{{ hw.classroom.name }}</span></td>
+                                    <td><span class="fw-semibold text-secondary small">{{ hw.subject.name|t_sub:current_lang }}</span></td>
+                                    <td class="fw-bold text-dark">{{ hw.title }}</td>
+                                    <td>
+                                        <span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill small">
+                                            <i class="fa-regular fa-clock me-1"></i> {{ hw.due_date|date:"d.m.Y" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if hw.file %}
+                                            <a href="{{ hw.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-circle" style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                                                <i class="fa-solid fa-download"></i>
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted small">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <p class="mb-0 fw-medium">{{ t.no_homeworks_yet }}</p>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.mark_attendance }} - {{ t.teacher_portal }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+    <!-- Sahifa sarlavhasi va Fan belgisi -->
+    <div class="page-header-box anim-1 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-header-title mb-1">
+                <i class="fa-solid fa-clipboard-user text-primary me-2"></i> {{ t.mark_attendance }}
+            </h1>
+            <p class="page-header-subtitle mb-0">{{ t.teacher_attendance_subtitle }}</p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            {% if teacher_subject %}
+                <span class="badge bg-primary text-white fs-6 px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>{{ t.your_assigned_subject }}: <strong>{{ teacher_subject.name|t_sub:current_lang }}</strong></span>
+                </span>
+            {% else %}
+                <span class="badge bg-warning text-dark fs-6 px-3 py-2 rounded-pill shadow-sm">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ t.no_subject_warning }}
+                </span>
+            {% endif %}
+            <a href="{% url 'teacher_dashboard' %}" class="btn-secondary-custom">
+                <i class="fa-solid fa-arrow-left me-1"></i> {{ t.back }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Ustozning jadvalidagi darslar (Tezkor tanlash) -->
+    {% if teacher_schedules_today %}
+    <div class="alert alert-info border-0 shadow-sm rounded-4 mb-4 p-3 anim-2 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(14, 165, 233, 0.12)); border: 1px solid rgba(79, 70, 229, 0.2) !important;">
+        <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-size: 1rem;">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div>
+                <strong class="text-dark">Tanlangan sanadagi dars jadvalingiz:</strong>
+                <div class="text-muted small">Davomat qilish uchun kerakli darsni bosing</div>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            {% for sch in teacher_schedules_today %}
+            <a href="?class_id={{ sch.classroom.id }}&date={{ selected_date }}&subject_id={{ sch.subject.id }}" 
+               class="badge {% if selected_class and selected_class.id == sch.classroom.id and teacher_subject and teacher_subject.id == sch.subject.id %}bg-primary text-white shadow-sm{% else %}bg-white text-dark border{% endif %} p-2 px-3 rounded-pill text-decoration-none shadow-sm hover-lift d-inline-flex align-items-center gap-1">
+                <i class="fa-regular fa-clock text-primary me-1"></i>
+                <span>{{ sch.lesson_number }}-soat:</span>
+                <strong>{{ sch.classroom.name }}</strong>
+                <span class="text-secondary small">({{ sch.subject.name|t_sub:current_lang }})</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not classes %}
+    <div class="alert alert-warning p-4 rounded-4 shadow-sm border-0 d-flex align-items-center gap-3 anim-2 mb-4">
+        <i class="fa-solid fa-triangle-exclamation fs-2 text-warning"></i>
+        <div>
+            <h5 class="fw-bold mb-1">Dars jadvalingizda biriktirilgan sinf mavjud emas</h5>
+            <p class="mb-0 text-muted small">Siz faqat o'zingiz dars jadvaliga kiritilgan yoki rahbarlik qiladigan sinfga davomat qila olasiz. Maktab ma'muriyatiga dars jadvalingizni kiritishni so'rang.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sinf va Sana tanlash kartasi -->
+    <div class="card card-modern p-4 mb-4 border-0 shadow-sm anim-2">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5 col-lg-4">
+                <label class="form-label fw-bold small text-uppercase" style="letter-spacing: 0.04em;">
+                    <i class="fa-solid fa-users-rectangle text-primary me-1"></i> {{ t.select_classroom }}:
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-chalkboard"></i></span>
+                    <select name="class_id" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- {{ t.select_classroom }} --</option>
+                        {% for c in classes %}
+                            <option value="{{ c.id }}" {% if selected_class.id == c.id %}selected{% endif %}>
+                                {{ c.name }} ({{ c.student_count }}/28 {{ t.student|lower }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-lg-3">
+                <label class="form-label fw-bold small text-uppercase" style="letter-spacing: 0.04em;">
+                    <i class="fa-regular fa-calendar-check text-primary me-1"></i> {{ t.date }}:
+                </label>
+                <input type="date" name="date" class="form-control" value="{{ selected_date }}" onchange="this.form.submit()">
+            </div>
+
+            {% if teacher_subjects %}
+            <div class="col-md-4 col-lg-3">
+                <label class="form-label fw-bold small text-uppercase" style="letter-spacing: 0.04em;">
+                    <i class="fa-solid fa-book-open text-primary me-1"></i> Dars fani:
+                </label>
+                <select name="subject_id" class="form-select" onchange="this.form.submit()">
+                    {% for sub in teacher_subjects %}
+                        <option value="{{ sub.id }}" {% if teacher_subject and teacher_subject.id == sub.id %}selected{% endif %}>
+                            {{ sub.name|t_sub:current_lang }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="col-auto">
+                <button type="submit" class="btn btn-secondary-custom">
+                    <i class="fa-solid fa-rotate me-1"></i> {{ t.select_classroom }}
+                </button>
+            </div>
+
+            {% if selected_class and students %}
+            <div class="col-auto ms-auto">
+                <button type="button" class="btn btn-outline-success fw-bold btn-sm rounded-pill px-3 py-2" id="btnMarkAllPresent">
+                    <i class="fa-solid fa-check-double me-1"></i> {{ t.mark_all_present }}
+                </button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if selected_class %}
+        <div class="card card-modern p-4 border-0 shadow-sm anim-3">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 pb-3 border-bottom">
+                <div>
+                    <h5 class="fw-bold mb-0">{{ selected_class.name }} {{ t.class_room|lower }}</h5>
+                    <small class="text-muted">{{ t.students_count }}: {{ students|length }} / 28</small>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+                        <i class="fa-solid fa-book-bookmark me-1"></i> {{ teacher_subject.name|t_sub:current_lang }}
+                    </span>
+                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-semibold">
+                        <i class="fa-regular fa-calendar-check me-1 text-primary"></i> {{ selected_date }}
+                    </span>
+                    <span class="limit-pill {% if students|length >= 28 %}limit-full{% elif students|length >= 24 %}limit-warning{% else %}limit-ok{% endif %}">
+                        {{ students|length }}/28
+                    </span>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="date" value="{{ selected_date }}">
+                {% if teacher_subject %}
+                <input type="hidden" name="subject_id" value="{{ teacher_subject.id }}">
+                {% endif %}
+
+                <div class="table-modern-wrapper mb-4">
+                    <table class="table-modern table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>{{ t.student }}</th>
+                                <th style="min-width: 320px;">{{ t.status }}</th>
+                                <th>{{ t.comment }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                                {% with existing=existing_attendance|dict_lookup:student.id %}
+                                <tr>
+                                    <td><span class="badge bg-light text-secondary border rounded-pill">{{ forloop.counter }}</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if student.avatar and student.avatar.name %}
+                                                <img src="{{ student.avatar.url }}" alt="{{ student.full_name }}" class="avatar-img" style="width: 38px; height: 38px; border-radius:50%; object-fit:cover;">
+                                            {% else %}
+                                                <div class="avatar-img d-inline-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 38px; height: 38px; font-size: 0.9rem; border-radius:50%;">
+                                                    {{ student.first_name|default:student.username|slice:":1"|upper }}
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-bold">{{ student.full_name }}</div>
+                                                <small class="text-muted">@{{ student.username }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm w-100 shadow-sm" role="group">
+                                            <input type="radio" class="btn-check radio-status-present" name="status_{{ student.id }}" id="pres_{{ student.id }}" value="present"
+                                                   {% if not existing or existing.status == 'present' %}checked{% endif %}>
+                                            <label class="btn btn-outline-success fw-semibold" for="pres_{{ student.id }}">
+                                                <i class="fa-solid fa-check me-1"></i> {{ t.present }}
+                                            </label>
+
+                                            <input type="radio" class="btn-check" name="status_{{ student.id }}" id="late_{{ student.id }}" value="late"
+                                                   {% if existing.status == 'late' %}checked{% endif %}>
+                                            <label class="btn btn-outline-info fw-semibold" for="late_{{ student.id }}">
+                                                <i class="fa-regular fa-clock me-1"></i> {{ t.late }}
+                                            </label>
+
+                                            <input type="radio" class="btn-check" name="status_{{ student.id }}" id="exc_{{ student.id }}" value="excused"
+                                                   {% if existing.status == 'excused' %}checked{% endif %}>
+                                            <label class="btn btn-outline-warning fw-semibold" for="exc_{{ student.id }}">
+                                                <i class="fa-solid fa-info me-1"></i> {{ t.excused }}
+                                            </label>
+
+                                            <input type="radio" class="btn-check" name="status_{{ student.id }}" id="abs_{{ student.id }}" value="absent"
+                                                   {% if existing.status == 'absent' %}checked{% endif %}>
+                                            <label class="btn btn-outline-danger fw-semibold" for="abs_{{ student.id }}">
+                                                <i class="fa-solid fa-xmark me-1"></i> {{ t.absent }}
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="note_{{ student.id }}" class="form-control form-control-sm"
+                                               value="{{ existing.note|default:'' }}" placeholder="{{ t.comment }}...">
+                                    </td>
+                                </tr>
+                                {% endwith %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-user-slash fs-2 opacity-50 mb-2 d-block"></i>
+                                        {{ t.no_students_in_class }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if students %}
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
+                        <span class="small text-muted">
+                            <i class="fa-solid fa-shield-halved text-primary me-1"></i>
+                            {{ t.your_assigned_subject }}: <strong>{{ teacher_subject.name|t_sub:current_lang }}</strong>
+                        </span>
+                        <button type="submit" class="btn btn-primary-custom py-2 px-4 shadow-sm">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> {{ t.save_attendance }}
+                        </button>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    {% else %}
+        <div class="card card-modern p-5 text-center text-muted border-0 shadow-sm anim-3">
+            <div class="empty-state-icon mx-auto mb-3" style="width:70px;height:70px;font-size:2rem;display:flex;align-items:center;justify-content:center;background:var(--primary-light);color:var(--primary);border-radius:20px;">
+                <i class="fa-solid fa-chalkboard-user"></i>
+            </div>
+            <h5 class="fw-bold mb-1">{{ t.select_classroom }}</h5>
+            <p class="small text-muted mb-0 max-w-md mx-auto">{{ t.teacher_attendance_hint }}</p>
+        </div>
+    {% endif %}
+
+    <!-- O'qituvchining so'nggi davomat yozuvlari tarixi -->
+    {% if recent_attendances %}
+    <div class="dash-card anim-4 mt-4">
+        <div class="dash-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="dash-card-title mb-0">
+                <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> {{ t.recent_grades_history }}
+            </h5>
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">{{ teacher_subject.name|t_sub:current_lang }}</span>
+        </div>
+        <div class="dash-card-body p-0">
+            <div class="table-modern-wrapper">
+                <table class="table-modern table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>{{ t.date }}</th>
+                            <th>{{ t.student }}</th>
+                            <th>{{ t.class_room }}</th>
+                            <th>{{ t.status }}</th>
+                            <th>{{ t.comment }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for att in recent_attendances %}
+                        <tr>
+                            <td class="fw-semibold small"><i class="fa-regular fa-calendar me-1 text-muted"></i> {{ att.date|date:"d.m.Y" }}</td>
+                            <td class="fw-bold">{{ att.student.full_name }}</td>
+                            <td><span class="badge bg-light text-secondary border">{{ att.classroom.name }}</span></td>
+                            <td>
+                                {% if att.status == 'present' %}
+                                    <span class="badge-status badge-present"><i class="fa-solid fa-check"></i> {{ t.present }}</span>
+                                {% elif att.status == 'absent' %}
+                                    <span class="badge-status badge-absent"><i class="fa-solid fa-xmark"></i> {{ t.absent }}</span>
+                                {% elif att.status == 'excused' %}
+                                    <span class="badge-status badge-excused"><i class="fa-solid fa-info"></i> {{ t.excused }}</span>
+                                {% else %}
+                                    <span class="badge-status badge-late"><i class="fa-regular fa-clock"></i> {{ t.late }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ att.note|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var btnAll = document.getElementById('btnMarkAllPresent');
+        if (btnAll) {
+            btnAll.addEventListener('click', function () {
+                document.querySelectorAll('.radio-status-present').forEach(function (radio) {
+                    radio.checked = true;
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+

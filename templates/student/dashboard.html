@@ -1,0 +1,705 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.student_portal }} — {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- ==========================================
+         O'QUVCHI KABINETI — ASOSIY BANNER
+         ========================================== -->
+    <!-- ==========================================
+         O'QUVCHI KABINETI — ASOSIY BANNER (YANGICHA AURORA MESH DIZAYN)
+         ========================================== -->
+    <div class="card border-0 mb-4 overflow-hidden shadow-lg student-hero-card" style="border-radius: 28px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #4338ca 85%, #6366f1 100%); color: #ffffff; border: 1px solid rgba(255,255,255,0.12);">
+        <div class="card-body p-4 p-md-5 position-relative">
+            <!-- Background luminous mesh glow -->
+            <div style="position:absolute; right:-40px; top:-40px; width:320px; height:320px; background: radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+            <div style="position:absolute; left:30%; bottom:-60px; width:260px; height:260px; background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+
+            <div class="row align-items-center g-4 position-relative" style="z-index: 2;">
+                <!-- Avatar -->
+                <div class="col-auto">
+                    <div style="width: 90px; height: 90px; border-radius: 24px; border: 3px solid rgba(255,255,255,0.4); overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,0.3); background: #ffffff;">
+                        {% if student.avatar and student.avatar.name %}
+                            <img src="{{ student.avatar.url }}" alt="{{ student.full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center h-100 fw-bold fs-1 text-white" style="font-family:'Outfit',sans-serif; background: linear-gradient(135deg, #6366f1, #a855f7);">
+                                {{ student.first_name|default:student.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="col">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="badge bg-white text-primary px-3 py-1 rounded-pill fw-bold">
+                            <i class="fa-solid fa-graduation-cap me-1"></i> {{ t.student }}
+                        </span>
+                        {% if classroom %}
+                        <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
+                            <i class="fa-solid fa-school me-1"></i> {{ classroom.name }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <h2 class="fw-bold mb-1 text-white" style="font-family:'Outfit', sans-serif;">
+                        {{ t.welcome }}, {{ student.first_name|default:student.full_name }}! 👋
+                    </h2>
+
+                    <div class="d-flex flex-wrap gap-3 text-white-50 small mt-2">
+                        <span>
+                            <i class="fa-solid fa-building text-warning me-1"></i>
+                            <strong>{{ t.school_num_prefix }} #{{ school.number|default:"-" }}</strong> ({{ school.name|default:t.school_name }})
+                        </span>
+                        {% if classroom.class_teacher %}
+                        <span>
+                            <i class="fa-solid fa-user-tie text-white me-1"></i>
+                            {{ t.class_teacher }}: <strong class="text-white">{{ classroom.class_teacher.full_name }}</strong>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- GPA & Edit button -->
+                <div class="col-12 col-xl-auto d-flex flex-wrap gap-2 align-items-center">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-4" style="background: rgba(255,255,255,0.18); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25);">
+                        <i class="fa-solid fa-star text-warning fs-3"></i>
+                        <div>
+                            <div class="text-white-50 small" style="line-height:1;">{{ t.average_grade }}</div>
+                            <div class="fw-bold text-white fs-4 leading-none mt-1">{{ avg_grade|default:"0.0" }} <span class="fs-6 text-white-50">/ 5.0</span></div>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'profile_edit' %}" class="btn btn-light fw-bold px-3 py-2 rounded-pill shadow-sm text-primary d-inline-flex align-items-center gap-1">
+                        <i class="fa-solid fa-user-pen"></i> {{ t.edit_profile }}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats row -->
+            <div class="row g-3 mt-3 pt-3 border-top border-white-50">
+                <div class="col-6 col-md-3">
+                    <div class="text-white-50 small">{{ t.average_grade }}</div>
+                    <div class="fw-bold text-white fs-4">{{ avg_grade|default:"0.0" }}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-white-50 small">{{ t.today_lessons }}</div>
+                    <div class="fw-bold text-white fs-4">{{ today_lessons|length }}</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-white-50 small">{{ t.attendance_rate }}</div>
+                    <div class="fw-bold text-white fs-4">{{ attendance_rate }}%</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-white-50 small">{{ t.homework }}</div>
+                    <div class="fw-bold text-white fs-4">{{ homeworks|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- ==========================================
+         ASOSIY O'QUVCHI BLOKLARI
+         ========================================== -->
+    <div class="row g-4">
+
+        <!-- CHAP TOMON: Bugungi darslar & Uy vazifalari -->
+        <div class="col-xl-8">
+
+            <!-- HOZIRGI DARS WIDGET -->
+            {% if current_lesson %}
+            <div class="card border-0 mb-4 shadow-sm overflow-hidden" id="currentLessonCard" style="border-radius:20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff;">
+                <div class="card-body p-4 position-relative">
+                    <div style="position:absolute;right:-20px;top:-20px;width:180px;height:180px;background:rgba(255,255,255,0.08);border-radius:50%;pointer-events:none;"></div>
+                    <div class="d-flex align-items-start justify-content-between gap-3 position-relative" style="z-index:2;">
+                        <div>
+                            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-2" style="background:rgba(255,255,255,0.2);">
+                                <span class="d-inline-block rounded-circle" style="width:8px;height:8px;background:#fff;animation:pulse 1.4s infinite;"></span>
+                                <span class="small fw-bold">Hozirgi dars (Live)</span>
+                            </div>
+                            <h4 class="fw-bold mb-1 text-white" style="font-family:'Outfit',sans-serif;">
+                                {{ current_lesson.subject.name }}
+                            </h4>
+                            <div class="text-white-75 small d-flex flex-wrap gap-3">
+                                {% if current_lesson.teacher %}
+                                <span><i class="fa-solid fa-chalkboard-user me-1"></i>{{ current_lesson.teacher.full_name }}</span>
+                                {% endif %}
+                                {% if current_lesson.room_number %}
+                                <span><i class="fa-solid fa-door-open me-1"></i>{{ current_lesson.room_number }}-xona</span>
+                                {% endif %}
+                                {% if current_lesson.start_time %}
+                                <span><i class="fa-solid fa-clock me-1"></i>{{ current_lesson.start_time|time:"H:i" }}{% if current_lesson.end_time %} — {{ current_lesson.end_time|time:"H:i" }}{% endif %}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Countdown -->
+                        <div class="text-center flex-shrink-0">
+                            <div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                                <div class="fw-bold text-white" style="font-size:1.2rem;line-height:1;" id="lessonCountdownMins">--</div>
+                                <div class="text-white-75" style="font-size:0.65rem;">daqiqa</div>
+                            </div>
+                            <div class="text-white-75 small mt-1">tugashiga</div>
+                        </div>
+                    </div>
+                    <!-- Progress bar -->
+                    <div class="mt-3 position-relative" style="z-index:2;">
+                        <div style="height:6px;background:rgba(255,255,255,0.2);border-radius:3px;overflow:hidden;">
+                            <div id="lessonProgressBar" style="height:100%;background:#fff;border-radius:3px;transition:width 1s linear;width:0%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-white-75" style="font-size:0.72rem;">Boshlanish</small>
+                            <small class="text-white fw-bold" style="font-size:0.72rem;" id="lessonCountdownFull">-- daqiqa qoldi</small>
+                            <small class="text-white-75" style="font-size:0.72rem;">Tugash</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Countdown JS -->
+            <script>
+            (function() {
+                var totalSecs = {{ current_lesson_end_seconds }};
+                var totalDuration = 40 * 60; // 40 daqiqa
+                var remaining = totalSecs;
+
+                function update() {
+                    if (remaining <= 0) {
+                        document.getElementById('lessonCountdownMins').textContent = '0';
+                        document.getElementById('lessonCountdownFull').textContent = 'Dars tugadi!';
+                        document.getElementById('lessonProgressBar').style.width = '100%';
+                        return;
+                    }
+                    var mins = Math.floor(remaining / 60);
+                    var secs = remaining % 60;
+                    document.getElementById('lessonCountdownMins').textContent = mins;
+                    document.getElementById('lessonCountdownFull').textContent = mins + ' daq ' + secs + ' son qoldi';
+                    var elapsed = totalDuration - remaining;
+                    var pct = Math.min(100, (elapsed / totalDuration) * 100);
+                    document.getElementById('lessonProgressBar').style.width = pct + '%';
+                    remaining--;
+                }
+                update();
+                setInterval(update, 1000);
+            })();
+            </script>
+            {% else %}
+            <!-- Hozir dars yo'q: keyingi darsni ko'rsatish -->
+            <div class="card border-0 mb-4 shadow-sm" style="border-radius:20px;background:var(--bg-card);">
+                <div class="card-body p-3 d-flex align-items-center gap-3">
+                    <div style="width:50px;height:50px;border-radius:14px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fa-regular fa-clock fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark mb-0">Hozir dars yo'q</div>
+                        <div class="text-muted small">
+                            {% if today_lessons %}Bugun {{ today_lessons|length }} ta dars rejalashtirilgan{% else %}Bugun dars kuni emas{% endif %}
+                        </div>
+                    </div>
+                    <a href="{% url 'student_timetable' %}" class="btn btn-sm btn-outline-primary rounded-pill ms-auto px-3 fw-semibold">Jadvalni ko'rish</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 1. Bugungi darslar (Elektron Kundalik) -->
+            <div class="card card-modern border-0 mb-4 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-book-open text-primary me-2"></i> {{ t.today_lessons }}
+                    </h5>
+                    <a href="{% url 'student_timetable' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                        {{ t.timetable }} <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="card-body p-4">
+                    {% if today_lessons %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for lesson in today_lessons %}
+                        <div class="p-3 rounded-3 border bg-light d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width:44px;height:44px;border-radius:12px;background:var(--primary);color:#fff;font-weight:800;font-size:1.15rem;display:flex;align-items:center;justify-content:center;">
+                                    {{ lesson.lesson_number }}
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <h6 class="fw-bold mb-0">{{ lesson.subject.name|t_sub:current_lang }}</h6>
+                                        <span class="badge bg-light text-secondary border small">
+                                            <i class="fa-solid fa-door-open me-1"></i> {{ lesson.room_number|default:t.room }}
+                                        </span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        {{ t.teacher_label }}: <strong class="text-secondary">{{ lesson.teacher.full_name|default:t.unassigned }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="badge bg-primary-light text-primary px-3 py-2 rounded-pill fw-semibold">
+                                {{ t.today }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-calendar-day fs-2 text-primary mb-2"></i>
+                        <h6 class="fw-bold mb-1">{{ t.today_lessons }} (0)</h6>
+                        <p class="small mb-0">{{ t.timetable }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 2. Uy Vazifalari Daftari -->
+            <div class="card card-modern border-0 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-list-check text-warning me-2"></i> {{ t.homework }}
+                    </h5>
+                    <a href="{% url 'student_homework' %}" class="text-primary text-decoration-none small fw-semibold">
+                        {{ t.view_all }} <i class="fa-solid fa-chevron-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="card-body p-4">
+                    {% if homeworks %}
+                    <div class="row g-3">
+                        {% for hw in homeworks %}
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 border shadow-sm h-100 d-flex flex-column justify-content-between" style="background:var(--bg-card);">
+                                <div>
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="badge bg-primary px-2 py-1 small fw-bold">{{ hw.subject.name|t_sub:current_lang }}</span>
+                                        <span class="badge bg-danger-light text-danger fw-bold">
+                                            <i class="fa-regular fa-clock me-1"></i> {{ hw.due_date|date:"d.m" }}
+                                        </span>
+                                    </div>
+                                    <h6 class="fw-bold mb-1">{{ hw.title }}</h6>
+                                    <p class="small text-muted mb-0" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                        {{ hw.description }}
+                                    </p>
+                                </div>
+                                <div class="mt-3 pt-2 border-top d-flex align-items-center justify-content-between small text-muted">
+                                    <span>{{ t.teacher_label }}: {{ hw.teacher.full_name }}</span>
+                                    <a href="{% url 'student_homework' %}" class="text-primary fw-semibold text-decoration-none">{{ t.details }}</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-circle-check fs-2 text-success mb-2"></i>
+                        <p class="small mb-0">{{ t.homework }} — (0)</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 3. YANGI: Kunlik Shaxsiy Rejalar & To-Do List (Interaktiv) -->
+            <div class="card card-modern border-0 mt-4 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <h5 class="fw-bold mb-0">
+                            <i class="fa-solid fa-clipboard-check text-success me-2"></i> Kunlik Rejalarim & Vazifalar 🎯
+                        </h5>
+                        <small class="text-muted">Kunlik rejalaringizni belgilang va unumdorlikni oshiring</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-success-light text-success fw-bold px-3 py-1 rounded-pill" id="todoProgressBadge">
+                            0/0 bajarildi
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Progress bar -->
+                    <div class="progress mb-3" style="height: 8px; border-radius: 6px; background: rgba(16, 185, 129, 0.1);">
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" id="todoProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <!-- Yangi vazifa qo'shish -->
+                    <div class="input-group mb-3">
+                        <input type="text" id="newTodoInput" class="form-control rounded-start-pill px-3 py-2" placeholder="Masalan: Fizikadan 12-masalani yechish yoki kitob o'qish..." style="font-size:0.92rem;">
+                        <button class="btn btn-primary-custom rounded-end-pill px-4 fw-bold" type="button" id="addTodoBtn">
+                            <i class="fa-solid fa-plus me-1"></i> Qo'shish
+                        </button>
+                    </div>
+
+                    <!-- Vazifalar ro'yxati -->
+                    <div id="todoListItems" class="d-flex flex-column gap-2" style="max-height: 280px; overflow-y: auto;">
+                        <!-- JS orqali to'ldiriladi -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. YANGI: Fanlar bo'yicha o'zlashtirish tahlili (Subject Mastery) -->
+            {% if subjects_stats %}
+            <div class="card card-modern border-0 mt-4 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-chart-line text-primary me-2"></i> Fanlar bo'yicha o'zlashtirish tahlili
+                    </h5>
+                    <a href="{% url 'student_grades' %}" class="text-primary text-decoration-none small fw-semibold">
+                        Batafsil baholar <i class="fa-solid fa-chevron-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        {% for sub in subjects_stats %}
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 border bg-light h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong class="text-dark">{{ sub.subject.name|t_sub:current_lang }}</strong>
+                                    <span class="badge {% if sub.avg >= 4.5 %}bg-success{% elif sub.avg >= 3.5 %}bg-primary{% else %}bg-warning text-dark{% endif %} rounded-pill px-2 py-1">
+                                        {{ sub.avg }} ball
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 6px; border-radius: 4px;">
+                                    <div class="progress-bar {% if sub.avg >= 4.5 %}bg-success{% elif sub.avg >= 3.5 %}bg-primary{% else %}bg-warning{% endif %}" style="width: {{ sub.percent }}%;"></div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2 small text-muted">
+                                    <span>Jami baholar: {{ sub.count }} ta</span>
+                                    <span>{{ sub.percent }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 5. YANGI: Foydali O'quv Resurslari & Elektron Kutubxona -->
+            <div class="card card-modern border-0 mt-4 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-graduation-cap text-info me-2"></i> Foydali O'quv Resurslari & Kutubxona 📚
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6 col-lg-3">
+                            <a href="https://edu.uz" target="_blank" class="p-3 rounded-3 border d-flex flex-column align-items-center text-center text-decoration-none h-100 resource-card" style="background:var(--bg-card); transition: all 0.2s;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center p-3 mb-2" style="width:50px; height:50px; background:rgba(99,102,241,0.12); color:var(--primary);">
+                                    <i class="fa-solid fa-book-bookmark fs-4"></i>
+                                </div>
+                                <strong class="text-dark small d-block mb-1">Darsliklar PDF</strong>
+                                <span class="text-muted" style="font-size:0.75rem;">Maktab kitoblari</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="https://uz.khanacademy.org" target="_blank" class="p-3 rounded-3 border d-flex flex-column align-items-center text-center text-decoration-none h-100 resource-card" style="background:var(--bg-card); transition: all 0.2s;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center p-3 mb-2" style="width:50px; height:50px; background:rgba(16,185,129,0.12); color:#10b981;">
+                                    <i class="fa-solid fa-laptop-code fs-4"></i>
+                                </div>
+                                <strong class="text-dark small d-block mb-1">Khan Academy</strong>
+                                <span class="text-muted" style="font-size:0.75rem;">Video darslar</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="https://bilim.uz" target="_blank" class="p-3 rounded-3 border d-flex flex-column align-items-center text-center text-decoration-none h-100 resource-card" style="background:var(--bg-card); transition: all 0.2s;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center p-3 mb-2" style="width:50px; height:50px; background:rgba(245,158,11,0.12); color:#f59e0b;">
+                                    <i class="fa-solid fa-brain fs-4"></i>
+                                </div>
+                                <strong class="text-dark small d-block mb-1">Bilim.uz</strong>
+                                <span class="text-muted" style="font-size:0.75rem;">Interaktiv testlar</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="https://ziyouz.com" target="_blank" class="p-3 rounded-3 border d-flex flex-column align-items-center text-center text-decoration-none h-100 resource-card" style="background:var(--bg-card); transition: all 0.2s;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center p-3 mb-2" style="width:50px; height:50px; background:rgba(239,68,68,0.12); color:#ef4444;">
+                                    <i class="fa-solid fa-feather-pointed fs-4"></i>
+                                </div>
+                                <strong class="text-dark small d-block mb-1">Ziyouz Kutubxona</strong>
+                                <span class="text-muted" style="font-size:0.75rem;">Badiiy adabiyotlar</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- O'NG TOMON: So'nggi baholar, Yutuqlar, Motivatsiya -->
+        <div class="col-xl-4">
+
+            <!-- 1. YANGI: Kunlik Motivatsiya va Hikmat -->
+            <div class="card border-0 mb-4 shadow-sm overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); color:#ffffff;">
+                <div class="card-body p-4 position-relative">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-white text-info fw-bold px-3 py-1 rounded-pill small">
+                            <i class="fa-solid fa-lightbulb text-warning me-1"></i> Kun Hikmati
+                        </span>
+                        <button type="button" class="btn btn-sm btn-link text-white text-decoration-none p-0" onclick="rotateQuote()" title="Boshqa iqtibos">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                    <p class="fs-6 fst-italic mb-2" id="quoteText" style="line-height:1.5;">
+                        "Bilim olishga sarflangan har bir daqiqa kelajakdagi katta zafarlarning poydevoridir."
+                    </p>
+                    <div class="text-white-50 small text-end" id="quoteAuthor">&bull; Abu Ali ibn Sino</div>
+                </div>
+            </div>
+
+            <!-- 2. YANGI: O'quv Yutuqlari va Medallar (Badges) -->
+            <div class="card card-modern border-0 mb-4 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-medal text-warning me-2"></i> Mening Yutuqlarim 🏆
+                    </h5>
+                    <span class="badge bg-warning-light text-warning fw-bold px-2 py-1 rounded-pill small">
+                        Gamifikatsiya
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column gap-3">
+                        <!-- Medal 1: 5 baholar -->
+                        <div class="d-flex align-items-center gap-3 p-2 rounded-3 bg-light border">
+                            <div class="fs-2 text-warning flex-shrink-0">⭐</div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold small text-dark">A'lochi Baholar</div>
+                                <div class="text-muted" style="font-size:0.75rem;">Sizda <strong>{{ five_count }}</strong> ta "5" baho bor!</div>
+                            </div>
+                            <span class="badge bg-success-light text-success fw-bold">Faol</span>
+                        </div>
+                        <!-- Medal 2: Davomat -->
+                        <div class="d-flex align-items-center gap-3 p-2 rounded-3 bg-light border">
+                            <div class="fs-2 text-info flex-shrink-0">🎯</div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold small text-dark">Intizomli Davomat</div>
+                                <div class="text-muted" style="font-size:0.75rem;">Davomat ko'rsatkichi: <strong>{{ attendance_rate }}%</strong></div>
+                            </div>
+                            <span class="badge {% if attendance_rate >= 90 %}bg-success-light text-success{% else %}bg-warning-light text-warning{% endif %} fw-bold">
+                                {% if attendance_rate >= 90 %}A'lo{% else %}O'rtacha{% endif %}
+                            </span>
+                        </div>
+                        <!-- Medal 3: Maktab hamjamiyati -->
+                        <div class="d-flex align-items-center gap-3 p-2 rounded-3 bg-light border">
+                            <div class="fs-2 text-primary flex-shrink-0">🚀</div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold small text-dark">Maktab Hamjamiyati</div>
+                                <div class="text-muted" style="font-size:0.75rem;">Chop etilgan postlar: <strong>{{ posts_count }}</strong> ta</div>
+                            </div>
+                            <a href="{% url 'feed' %}" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2" style="font-size:0.75rem;">Post</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. So'nggi Baholar -->
+            <div class="card card-modern border-0 mb-4 shadow-sm" style="border-radius:20px;">
+                <div class="card-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-star text-warning me-2"></i> {{ t.grades }}
+                    </h5>
+                    <a href="{% url 'student_grades' %}" class="text-primary text-decoration-none small fw-semibold">
+                        {{ t.view_all }} <i class="fa-solid fa-chevron-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="card-body p-0">
+                    {% if recent_grades %}
+                    <div class="list-group list-group-flush">
+                        {% for g in recent_grades %}
+                        <div class="list-group-item px-4 py-3 d-flex align-items-center justify-content-between" style="background:transparent; border-color:var(--border);">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge {% if g.grade == 5 %}bg-success{% elif g.grade == 4 %}bg-primary{% elif g.grade == 3 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6 fw-bold px-3 py-2 rounded-circle" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+                                    {{ g.grade }}
+                                </span>
+                                <div>
+                                    <h6 class="fw-bold mb-0">{{ g.subject.name|t_sub:current_lang }}</h6>
+                                    <small class="text-muted">{{ t.teacher_label }}: {{ g.teacher.full_name }} &bull; {{ g.date|date:"d.m" }}</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-light text-secondary border small">{{ g.grade }}/5</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <p class="small mb-0">{{ t.grades }} — (0)</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 4. Tezkor Chat & Muloqot Vidjeti -->
+            <div class="card border-0 mb-4 shadow-sm overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff;">
+                <div class="card-body p-4 position-relative">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-white text-success fw-bold px-3 py-1 rounded-pill small">
+                            <i class="fa-solid fa-comments me-1"></i> Muloqot & Chat
+                        </span>
+                        {% if unread_chat_count > 0 %}
+                        <span class="badge bg-danger text-white rounded-pill px-2 py-1 small animate-pulse">
+                            {{ unread_chat_count }} yangi xabar
+                        </span>
+                        {% endif %}
+                    </div>
+                    <h6 class="fw-bold text-white mb-1">Ustoz va Sinfdoshlar bilan bog'laning</h6>
+                    <p class="text-white-50 small mb-3">
+                        Darslar bo'yicha savollaringizni bevosita ustozingizga yozishingiz yoki ovozli xabar jo'natishingiz mumkin.
+                    </p>
+                    <a href="{% url 'chat' %}" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-success w-100 shadow-sm d-inline-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Chatni ochish
+                    </a>
+                </div>
+            </div>
+
+            <!-- 5. Maktab Lentasi & Post Qo'yish Vidjeti -->
+            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:#ffffff;">
+                <div class="card-body p-4 position-relative">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-white text-primary fw-bold px-3 py-1 rounded-pill">
+                            <i class="fa-solid fa-fire text-warning me-1"></i> Hamjamiyat
+                        </span>
+                    </div>
+                    <h5 class="fw-bold mb-1 text-white" style="font-family:'Outfit',sans-serif;">
+                        Maktab Lentasi & Postlar 🚀
+                    </h5>
+                    <p class="text-white-50 small mb-3">
+                        O'z yutuqlaringiz, rasmlaringiz va fikrlaringizni butun maktab bilan baham ko'ring!
+                    </p>
+                    <a href="{% url 'feed' %}" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-primary w-100 shadow-sm d-inline-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> Lentaga o'tish
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- SCRIPT: INTERAKTIV TO-DO VA MOTIVATSIYA ROTORI -->
+<script>
+// Iqtiboslar
+const quotes = [
+    { text: "Bilim olishga sarflangan har bir daqiqa kelajakdagi katta zafarlarning poydevoridir.", author: "Abu Ali ibn Sino" },
+    { text: "O'qishdan to'xtagan odam yashashdan ham to'xtaydi. Bilim — cheksiz ummon.", author: "Alisher Navoiy" },
+    { text: "Qiyin vazifalarni bajarganing sari, imkoniyatlaring yanada kengayaveradi.", author: "Mirzo Ulug'bek" },
+    { text: "Bugungi mehnatingiz — ertangi muvaffaqiyatingiz mevasidir.", author: "Xalq maqoli" },
+    { text: "Har bir buyuk kashfiyot oddiy qiziqish va qat'iyatdan boshlangan.", author: "Abu Rayhon Beruniy" }
+];
+let currentQuoteIdx = 0;
+
+function rotateQuote() {
+    currentQuoteIdx = (currentQuoteIdx + 1) % quotes.length;
+    document.getElementById('quoteText').textContent = `"${quotes[currentQuoteIdx].text}"`;
+    document.getElementById('quoteAuthor').textContent = `• ${quotes[currentQuoteIdx].author}`;
+}
+
+// Interaktiv To-Do List (localStorage orqali)
+const studentId = "{{ student.id }}";
+const storageKey = 'student_todos_' + studentId;
+
+function loadTodos() {
+    let saved = localStorage.getItem(storageKey);
+    let todos = saved ? JSON.parse(saved) : [
+        { id: 1, text: "Bugungi uy vazifalarini to'liq bajarish", done: true },
+        { id: 2, text: "Ertangi darslar uchun darsliklarni tayyorlash", done: false },
+        { id: 3, text: "Kamida 20 daqiqa kitob mutolaa qilish", done: false }
+    ];
+    renderTodos(todos);
+}
+
+function saveTodos(todos) {
+    localStorage.setItem(storageKey, JSON.stringify(todos));
+    renderTodos(todos);
+}
+
+function renderTodos(todos) {
+    const list = document.getElementById('todoListItems');
+    if (!list) return;
+
+    const total = todos.length;
+    const completed = todos.filter(t => t.done).length;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    const progressBadge = document.getElementById('todoProgressBadge');
+    if (progressBadge) progressBadge.textContent = `${completed}/${total} bajarildi`;
+
+    const progressBar = document.getElementById('todoProgressBar');
+    if (progressBar) progressBar.style.width = `${percent}%`;
+
+    if (todos.length === 0) {
+        list.innerHTML = '<div class="text-center text-muted py-3 small">Hozircha rejalar yo\'q. Yangi reja qo\'shing! 📝</div>';
+        return;
+    }
+
+    let html = '';
+    todos.forEach(item => {
+        html += `
+            <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 border ${item.done ? 'bg-light' : 'bg-white'}" style="transition:all 0.2s;">
+                <div class="form-check d-flex align-items-center gap-2 mb-0">
+                    <input class="form-check-input" type="checkbox" id="todoCheck_${item.id}" ${item.done ? 'checked' : ''} onchange="toggleTodo(${item.id})">
+                    <label class="form-check-label ${item.done ? 'text-decoration-line-through text-muted' : 'fw-semibold text-dark'}" for="todoCheck_${item.id}" style="font-size:0.9rem; cursor:pointer;">
+                        ${escapeTodoHtml(item.text)}
+                    </label>
+                </div>
+                <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" onclick="deleteTodo(${item.id})" title="O'chirish">
+                    <i class="fa-solid fa-trash-can" style="font-size:0.85rem;"></i>
+                </button>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function escapeTodoHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function toggleTodo(id) {
+    let saved = localStorage.getItem(storageKey);
+    let todos = saved ? JSON.parse(saved) : [];
+    todos = todos.map(t => t.id === id ? { ...t, done: !t.done } : t);
+    saveTodos(todos);
+}
+
+function deleteTodo(id) {
+    let saved = localStorage.getItem(storageKey);
+    let todos = saved ? JSON.parse(saved) : [];
+    todos = todos.filter(t => t.id !== id);
+    saveTodos(todos);
+}
+
+function addTodo() {
+    const input = document.getElementById('newTodoInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    let saved = localStorage.getItem(storageKey);
+    let todos = saved ? JSON.parse(saved) : [];
+    todos.push({
+        id: Date.now(),
+        text: text,
+        done: false
+    });
+    input.value = '';
+    saveTodos(todos);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTodos();
+
+    const addBtn = document.getElementById('addTodoBtn');
+    const input = document.getElementById('newTodoInput');
+    if (addBtn && input) {
+        addBtn.addEventListener('click', addTodo);
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTodo();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1221 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.feed }} — {{ t.school_portal }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+    <!-- ==========================================
+         MAKTAB LENTASI — HERO BANNER
+         ========================================== -->
+    <div class="card border-0 mb-4 feed-hero shadow-sm">
+        <div class="card-body p-4 p-md-5 position-relative" style="z-index: 2;">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(8px);">
+                        <i class="fa-solid fa-fire text-warning"></i>
+                        <span class="small fw-semibold text-white">EduMaktab Hamjamiyati</span>
+                    </div>
+                    <h1 class="display-6 fw-bold text-white mb-2" style="font-family:'Outfit',sans-serif;">
+                        {{ t.feed }} 🚀
+                    </h1>
+                    <p class="text-white-50 mb-0 fs-6" style="max-width: 620px;">
+                        Maktabimiz yangiliklari, o'quvchilar va ustozlar yutuqlari, qiziqarli fikrlar hamda ijodiy ishlar maydoni. O'z postingizni qoldiring va tengdoshlaringiz bilan fikr almashing!
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="d-inline-flex flex-wrap gap-3 justify-content-lg-end">
+                        <div class="p-3 rounded-4 text-center" style="background: rgba(255,255,255,0.18); backdrop-filter: blur(10px); min-width: 110px;">
+                            <div class="text-white-50 small">Jami postlar</div>
+                            <div class="fs-3 fw-bold text-white">{{ total_posts }}</div>
+                        </div>
+                        <div class="p-3 rounded-4 text-center" style="background: rgba(255,255,255,0.18); backdrop-filter: blur(10px); min-width: 110px;">
+                            <div class="text-white-50 small">Sizning postingiz</div>
+                            <div class="fs-3 fw-bold text-white">{{ my_posts_count }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         ASOSIY CONTENT ROW
+         ========================================== -->
+    <div class="row g-4">
+
+        <!-- CHAP TOMON: POST YARATISH VA LENTA -->
+        <div class="col-lg-8">
+
+            <!-- ==========================================
+                 YANGILANGAN VA O'TA QULAY POST YARATISH BLOKI
+                 ========================================== -->
+            <div class="card feed-composer-card p-3 p-md-4 mb-4" id="postComposerCard">
+                <!-- Composer Header -->
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="composer-avatar">
+                        {% else %}
+                            <div class="composer-avatar-initials">
+                                {{ user.first_name|default:user.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="fw-bold fs-5 text-primary-emphasis" style="font-family:'Outfit',sans-serif;">
+                                    {{ user.full_name }}
+                                </span>
+                                <span class="badge post-badge-role {% if user.role == 'student' %}post-badge-student{% elif user.role == 'teacher' %}post-badge-teacher{% else %}post-badge-admin{% endif %}">
+                                    {% if user.role == 'student' %}<i class="fa-solid fa-graduation-cap"></i> O'quvchi
+                                    {% elif user.role == 'teacher' %}<i class="fa-solid fa-chalkboard-user"></i> Ustoz
+                                    {% else %}<i class="fa-solid fa-shield-halved"></i> Admin{% endif %}
+                                </span>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                {% if user.classroom %}<i class="fa-solid fa-school me-1 text-primary"></i> <strong>{{ user.classroom.name }}</strong> sinfi{% endif %}
+                                {% if user.school %} &bull; {{ user.school.number }}-sonli maktab{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-2 rounded-pill d-none d-sm-inline-flex align-items-center gap-1">
+                        <i class="fa-solid fa-pen-nib"></i> Yangi post
+                    </span>
+                </div>
+
+                <form action="{% url 'post_create' %}" method="POST" enctype="multipart/form-data" id="postCreateForm">
+                    {% csrf_token %}
+
+                    <!-- 1. Kategoriya tanlash (Katta va qulay tugmalar) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary small d-flex align-items-center gap-1 mb-2">
+                            <i class="fa-solid fa-tag text-primary"></i> 1. Post mavzusi / kategoriyasini tanlang:
+                        </label>
+                        <div class="composer-cat-grid" id="categoryPickerGrid">
+                            {% for cat_val, cat_label in category_choices %}
+                            <label class="mb-0">
+                                <input type="radio" name="category" value="{{ cat_val }}" class="composer-cat-radio" {% if forloop.first %}checked{% endif %}>
+                                <span class="composer-cat-label">
+                                    {{ cat_label }}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 2. Post matni maydoni -->
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-secondary small d-flex align-items-center justify-content-between mb-2">
+                            <span><i class="fa-solid fa-message text-primary me-1"></i> 2. Fikringiz yoki yangilikni yozing:</span>
+                            <span class="text-muted fw-normal" id="charCounter">0 belgi</span>
+                        </label>
+                        <textarea name="content" id="postContentInput" class="form-control composer-textarea" rows="4" placeholder="Bugun maktabimizda qanday qiziqarli voqea yuz berdi? O'z yutug'ingiz, sinfingiz yangiliklari yoki savollaringizni shu yerga yozing..." required></textarea>
+                    </div>
+
+                    <!-- 3. Tezkor Emojilar paneli -->
+                    <div class="composer-emoji-bar mb-3">
+                        <span class="text-muted small fw-semibold me-1"><i class="fa-regular fa-face-smile text-warning me-1"></i> Emojilar:</span>
+                        <button type="button" class="composer-emoji-btn" onclick="insertEmoji('🏆')">🏆 Yutuq</button>
+                        <button type="button" class="composer-emoji-btn" onclick="insertEmoji('🎉')">🎉 Tabrik</button>
+                        <button type="button" class="composer-emoji-btn" onclick="insertEmoji('💡')">💡 Fikr</button>
+                        <button type="button" class="composer-emoji-btn" onclick="insertEmoji('🔥')">🔥 Zo'r</button>
+                        <button type="button" class="composer-emoji-btn" onclick="insertEmoji('📚')">📚 Dars</button>
+                        <button type="button" class="composer-emoji-btn" onclick="insertEmoji('⚽')">⚽ Sport</button>
+                        <button type="button" class="composer-emoji-btn" onclick="insertEmoji('🌟')">🌟 A'lo</button>
+                        <button type="button" class="composer-emoji-btn" onclick="insertEmoji('❤️')">❤️ Rahmat</button>
+                    </div>
+
+                    <!-- 4. Rasm yuklash (Ko'rinarli Dropzone qutisi) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary small d-flex align-items-center gap-1 mb-2">
+                            <i class="fa-solid fa-camera text-primary"></i> 3. Rasm yoki Video biriktirish (ixtiyoriy):
+                        </label>
+
+                        <!-- Asl file inputs (yashirin) -->
+                        <input type="file" name="image" id="postImageInput" accept="image/*" class="d-none">
+                        <input type="file" name="video" id="postVideoInput" accept="video/*" class="d-none">
+
+                        <!-- Media type toggle buttons -->
+                        <div class="d-flex gap-2 mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" id="toggleImageBtn" onclick="triggerImageUpload()">
+                                <i class="fa-solid fa-image me-1"></i> Rasm
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" id="toggleVideoBtn" onclick="triggerVideoUpload()">
+                                <i class="fa-solid fa-video me-1"></i> Video
+                            </button>
+                        </div>
+
+                        <!-- Ko'rinib turadigan Dropzone maydoni -->
+                        <div class="composer-dropzone" id="composerDropzone" onclick="triggerImageUpload()">
+                            <div class="composer-dropzone-icon">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <div class="fw-bold text-primary-emphasis mb-1">
+                                Rasm yoki Video yuklash uchun bu yerga bosing yoki sudrab tashlang
+                            </div>
+                            <div class="text-muted small">
+                                Rasm: JPG, PNG, WEBP &bull; Video: MP4, AVI, MOV (max 50MB)
+                            </div>
+                        </div>
+
+                        <!-- Rasm tanlangandagi to'liq ko'rinish (Preview) -->
+                        <div id="imagePreviewContainer" class="composer-preview-wrap d-none">
+                            <img id="imagePreviewImg" class="composer-preview-img" src="#" alt="Tanlangan rasm">
+                            <div class="composer-preview-info">
+                                <span id="imagePreviewFilename"><i class="fa-solid fa-image me-1"></i> Rasm tanlandi</span>
+                                <span class="badge bg-success-subtle text-success">Chop etishga tayyor</span>
+                            </div>
+                            <button type="button" class="composer-remove-img" id="removeImageBtn" title="Suratni bekor qilish">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Video tanlangandagi preview -->
+                        <div id="videoPreviewContainer" class="composer-preview-wrap d-none" style="flex-direction:column;align-items:flex-start;gap:8px;">
+                            <video id="videoPreviewEl" controls style="width:100%;max-height:260px;border-radius:12px;background:#000;"></video>
+                            <div class="composer-preview-info" style="width:100%;">
+                                <span id="videoPreviewFilename"><i class="fa-solid fa-video me-1"></i> Video tanlandi</span>
+                                <span class="badge bg-danger-subtle text-danger">Video</span>
+                            </div>
+                            <button type="button" class="composer-remove-img" id="removeVideoBtn" title="Videoni bekor qilish">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 5. Chop etish tugmasi -->
+                    <div class="d-flex align-items-center justify-content-between pt-3 border-top flex-wrap gap-2">
+                        <div class="text-muted small">
+                            <i class="fa-solid fa-shield-halved text-success me-1"></i> Postingiz butun maktab lentasida e'lon qilinadi
+                        </div>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border:none; font-size:1rem;">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Postni chop etish 🚀</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ==========================================
+                 FILTRLAR VA QIDIRUV PANELI
+                 ========================================== -->
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-card">
+                <div class="row g-2 align-items-center justify-content-between">
+                    <!-- Scope Filter Tabs -->
+                    <div class="col-12 col-md-auto">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="?filter=all{% if current_category != 'all' %}&category={{ current_category }}{% endif %}"
+                               class="feed-filter-btn {% if filter_type == 'all' %}active{% endif %}">
+                                <i class="fa-solid fa-globe"></i> {{ t.all_posts }}
+                            </a>
+                            <a href="?filter=my{% if current_category != 'all' %}&category={{ current_category }}{% endif %}"
+                               class="feed-filter-btn {% if filter_type == 'my' %}active{% endif %}">
+                                <i class="fa-solid fa-user"></i> {{ t.my_posts }}
+                            </a>
+                            {% if user.classroom %}
+                            <a href="?filter=class{% if current_category != 'all' %}&category={{ current_category }}{% endif %}"
+                               class="feed-filter-btn {% if filter_type == 'class' %}active{% endif %}">
+                                <i class="fa-solid fa-school"></i> {{ t.class_posts }} ({{ user.classroom.name }})
+                            </a>
+                            {% endif %}
+                            <a href="?filter=teachers{% if current_category != 'all' %}&category={{ current_category }}{% endif %}"
+                               class="feed-filter-btn {% if filter_type == 'teachers' %}active{% endif %}">
+                                <i class="fa-solid fa-chalkboard-user"></i> {{ t.teachers_posts }}
+                            </a>
+                            <a href="?filter=media{% if current_category != 'all' %}&category={{ current_category }}{% endif %}"
+                               class="feed-filter-btn {% if filter_type == 'media' %}active{% endif %}">
+                                <i class="fa-solid fa-images"></i> {{ t.photos_only }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Qidiruv maydoni -->
+                    <div class="col-12 col-md-4">
+                        <form method="GET" action="{% url 'feed' %}" class="position-relative">
+                            {% if filter_type != 'all' %}<input type="hidden" name="filter" value="{{ filter_type }}">{% endif %}
+                            {% if current_category != 'all' %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                            <input type="text" name="q" value="{{ search_query }}" class="form-control rounded-pill pe-5 ps-3" placeholder="Post yoki o'quvchini qidirish..." style="font-size: 0.88rem;">
+                            <button type="submit" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted text-decoration-none pe-3">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Kategoriya Chips -->
+                <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                    <a href="?filter={{ filter_type }}&category=all" class="feed-category-pill {% if current_category == 'all' %}active{% endif %}">
+                        Barcha mavzular
+                    </a>
+                    {% for cat_val, cat_label in category_choices %}
+                    <a href="?filter={{ filter_type }}&category={{ cat_val }}" class="feed-category-pill {% if current_category == cat_val %}active{% endif %}">
+                        {{ cat_label }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 YANGILANGAN VA CHIROYLI POSTLAR RO'YXATI
+                 ========================================== -->
+            {% if posts %}
+                {% for post in posts %}
+                <div class="feed-post-card" id="postCard-{{ post.id }}">
+
+                    <!-- Post yuqorisidagi rangli aksent chizig'i -->
+                    <div class="feed-post-accent feed-post-accent-{{ post.category }}"></div>
+
+                    <!-- Post Header (Muallif, Roli, Sinf, Vaqt) -->
+                    <div class="p-3 p-md-4 pb-2">
+                        <div class="d-flex align-items-start justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- Muallifning rasmi -->
+                                {% if post.author.avatar %}
+                                    <img src="{{ post.author.avatar.url }}" alt="{{ post.author.full_name }}" class="post-author-avatar">
+                                {% else %}
+                                    <div class="post-author-initials">
+                                        {{ post.author.first_name|default:post.author.username|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+
+                                <!-- Muallif ma'lumotlari -->
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                        <span class="post-author-name">{{ post.author.full_name }}</span>
+                                        <span class="badge post-badge-role {% if post.author.role == 'student' %}post-badge-student{% elif post.author.role == 'teacher' %}post-badge-teacher{% else %}post-badge-admin{% endif %}">
+                                            {% if post.author.role == 'student' %}
+                                                <i class="fa-solid fa-graduation-cap"></i> O'quvchi
+                                            {% elif post.author.role == 'teacher' %}
+                                                <i class="fa-solid fa-chalkboard-user"></i> Ustoz
+                                            {% else %}
+                                                <i class="fa-solid fa-shield-halved"></i> Admin
+                                            {% endif %}
+                                        </span>
+                                        {% if post.author.classroom %}
+                                            <span class="badge bg-light text-secondary border rounded-pill">{{ post.author.classroom.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="post-author-meta d-flex align-items-center gap-2">
+                                        <span>
+                                            <i class="fa-regular fa-clock me-1 text-primary"></i> {{ post.created_at|timesince }} oldin
+                                        </span>
+                                        {% if post.author.school %}
+                                        <span>&bull;</span>
+                                        <span>
+                                            <i class="fa-solid fa-building me-1 text-secondary"></i> {{ post.author.school.number }}-sonli maktab
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- O'chirish menyusi (Muallif yoki Admin uchun) -->
+                            {% if user == post.author or user.role == 'admin' or user.is_staff or user.is_superuser %}
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light rounded-circle border-0 text-muted shadow-none" type="button" data-bs-toggle="dropdown" title="Amallar">
+                                    <i class="fa-solid fa-ellipsis-vertical fs-6"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-1">
+                                    <li>
+                                        <a class="dropdown-item text-danger rounded-2 d-flex align-items-center gap-2 py-2"
+                                           href="{% url 'post_delete' post.id %}"
+                                           onclick="return confirm('Haqiqatan ham ushbu postni o\'chirmoqchimisiz?');">
+                                            <i class="fa-solid fa-trash-can"></i> {{ t.delete_post }}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Post Kategoriya Nishi -->
+                        <div class="mt-3">
+                            <span class="post-category-badge">
+                                {{ post.get_category_display }}
+                            </span>
+                        </div>
+
+                        <!-- Post Matni -->
+                        <div class="post-text mt-3">
+                            {{ post.content|linebreaksbr }}
+                        </div>
+                    </div>
+
+                    <!-- Post Rasmi (Chiroyli ramka va zoom effekti bilan) -->
+                    {% if post.image %}
+                    <div class="px-3 px-md-4 pb-3">
+                        <div class="post-image-container" onclick="openLightbox('{{ post.image.url }}', '{{ post.author.full_name }}')">
+                            <img src="{{ post.image.url }}" alt="Post image" class="post-image" loading="lazy">
+                            <div class="post-image-overlay">
+                                <i class="fa-solid fa-magnifying-glass-plus"></i>
+                                <span>Kattalashtirib ko'rish</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Post Videosi -->
+                    {% if post.video %}
+                    <div class="px-3 px-md-4 pb-3">
+                        <div style="border-radius:14px;overflow:hidden;background:#000;position:relative;">
+                            <video controls style="width:100%;max-height:400px;display:block;border-radius:14px;" preload="metadata">
+                                <source src="{{ post.video.url }}" type="video/mp4">
+                                Brauzeringiz video qo'llab-quvvatlamaydi.
+                            </video>
+                            <div style="position:absolute;top:10px;left:10px;">
+                                <span style="background:rgba(0,0,0,0.65);color:#fff;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">
+                                    <i class="fa-solid fa-video me-1"></i> Video
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Post Amallari (Like, Izoh, Ulashish) -->
+                    <div class="post-actions-bar">
+                        <!-- Like Button -->
+                        <button type="button"
+                                class="post-action-btn post-like-btn {% if user in post.likes.all %}liked{% endif %}"
+                                id="likeBtn-{{ post.id }}"
+                                onclick="toggleLike({{ post.id }})">
+                            <i class="fa-heart {% if user in post.likes.all %}fa-solid{% else %}fa-regular{% endif %}"></i>
+                            <span class="like-text">{% if user in post.likes.all %}Yoqdi{% else %}Yoqtirish{% endif %}</span>
+                            <span class="badge rounded-pill bg-light text-dark border ms-1" id="likeCount-{{ post.id }}">
+                                {{ post.total_likes }}
+                            </span>
+                        </button>
+
+                        <!-- Izohlar Button -->
+                        <button type="button"
+                                class="post-action-btn post-comment-btn"
+                                onclick="toggleComments({{ post.id }})">
+                            <i class="fa-regular fa-comment-dots"></i>
+                            <span>{{ t.comments }}</span>
+                            <span class="badge rounded-pill bg-light text-dark border ms-1" id="commentCount-{{ post.id }}">
+                                {{ post.total_comments }}
+                            </span>
+                        </button>
+
+                        <!-- Chatga ulashish -->
+                        <button type="button"
+                                class="post-action-btn ms-auto text-primary"
+                                onclick="openChatShareModal({{ post.id }}, '{{ post.author.full_name|escapejs }}', '{{ post.content|truncatechars:50|escapejs }}')"
+                                title="Chatga ulashish">
+                            <i class="fa-solid fa-paper-plane me-1"></i>
+                            <span class="d-none d-sm-inline fw-bold">Chatga ulashish</span>
+                        </button>
+                    </div>
+
+                    <!-- Post Izohlar Bo'limi -->
+                    <div class="post-comments-wrap" id="commentsSection-{{ post.id }}">
+
+                        <!-- Izoh yozish formasi -->
+                        <form action="{% url 'post_comment' post.id %}" method="POST" class="d-flex align-items-center gap-2 mb-3 comment-form" data-post-id="{{ post.id }}">
+                            {% csrf_token %}
+                            {% if user.avatar %}
+                                <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="rounded-circle flex-shrink-0" style="width:38px; height:38px; object-fit:cover; border: 2px solid var(--border);">
+                            {% else %}
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0" style="width:38px; height:38px; background:linear-gradient(135deg, #4f46e5, #8b5cf6); font-size:0.9rem;">
+                                    {{ user.first_name|default:user.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                            <input type="text" name="content" class="form-control comment-input-field" placeholder="O'z fikringiz yoki tabrigingizni qoldiring..." required autocomplete="off">
+                            <button type="submit" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width:42px; height:42px;" title="Yuborish">
+                                <i class="fa-solid fa-paper-plane fs-6"></i>
+                            </button>
+                        </form>
+
+                        <!-- Mavjud Izohlar Ro'yxati -->
+                        <div class="comments-list d-flex flex-column gap-2" id="commentsList-{{ post.id }}">
+                            {% for comment in post.comments.all %}
+                            <div class="d-flex align-items-start gap-2 comment-item" id="commentItem-{{ comment.id }}">
+                                {% if comment.author.avatar %}
+                                    <img src="{{ comment.author.avatar.url }}" alt="{{ comment.author.full_name }}" class="rounded-circle mt-1 flex-shrink-0" style="width:36px; height:36px; object-fit:cover; border: 1.5px solid var(--border);">
+                                {% else %}
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mt-1 flex-shrink-0" style="width:36px; height:36px; background:#8b5cf6; font-size:0.85rem;">
+                                        {{ comment.author.first_name|default:comment.author.username|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                                <div class="comment-bubble flex-grow-1">
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="comment-author-name">{{ comment.author.full_name }}</span>
+                                            {% if comment.author.classroom %}
+                                                <span class="badge bg-light text-secondary border" style="font-size:0.68rem;">{{ comment.author.classroom.name }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-muted small" style="font-size:0.75rem;">{{ comment.created_at|timesince }} oldin</span>
+                                            {% if user == comment.author or user == post.author or user.role == 'admin' or user.is_staff %}
+                                            <a href="{% url 'post_comment_delete' comment.id %}" class="text-danger small text-decoration-none" title="Izohni o'chirish" onclick="return confirm('Izohni o\'chirmoqchimisiz?');">
+                                                <i class="fa-solid fa-trash-can" style="font-size:0.75rem;"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="comment-content">
+                                        {{ comment.content }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-2 small empty-comments-msg">
+                                Hozircha izohlar yo'q. Birinchi bo'lib fikr bildiring!
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- BO'SH HOLAT (NO POSTS) -->
+                <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-card">
+                    <div class="mb-3">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:80px; height:80px; background: var(--primary-light); color: var(--primary);">
+                            <i class="fa-solid fa-newspaper fs-1"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold mb-2 text-primary-emphasis" style="font-family:'Outfit',sans-serif;">Hozircha postlar mavjud emas</h4>
+                    <p class="text-muted mb-4" style="max-width: 480px; margin: 0 auto;">
+                        {% if search_query %}
+                            "{{ search_query }}" bo'yicha hech qanday post topilmadi. Boshqa so'z bilan qidirib ko'ring yoki barcha postlarni ko'ring.
+                        {% else %}
+                            Ushbu bo'limda hali hech kim post qoldirmagan. Birinchi bo'lib o'z fikringiz yoki yutug'ingizni ulashing!
+                        {% endif %}
+                    </p>
+                    <div>
+                        <a href="#postComposerCard" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+                            <i class="fa-solid fa-pen-nib me-2"></i> Birinchi bo'lib post joylash
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+
+        <!-- O'NG TOMON: SIDEBAR (PROFIL, YUTUQLAR, FAOL O'QUVCHILAR) -->
+        <div class="col-lg-4">
+
+            <!-- SIZNING STATISTIKANGIZ -->
+            <div class="feed-sidebar-card">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}" class="post-author-avatar">
+                    {% else %}
+                        <div class="post-author-initials">
+                            {{ user.first_name|default:user.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h6 class="fw-bold mb-0 text-primary-emphasis fs-5">{{ user.full_name }}</h6>
+                        <div class="text-muted small">@{{ user.username }}</div>
+                        <span class="badge post-badge-role mt-1 {% if user.role == 'student' %}post-badge-student{% elif user.role == 'teacher' %}post-badge-teacher{% else %}post-badge-admin{% endif %}">
+                            {{ user.get_role_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="row g-2 text-center pt-2 border-top">
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 bg-light">
+                            <div class="fw-bold fs-4 text-primary">{{ my_posts_count }}</div>
+                            <div class="text-muted small" style="font-size:0.75rem;">Postlaringiz</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 bg-light">
+                            <div class="fw-bold fs-4 text-success">
+                                {% if user.classroom %}{{ user.classroom.name }}{% else %}-{% endif %}
+                            </div>
+                            <div class="text-muted small" style="font-size:0.75rem;">Sinfingiz</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="{% url 'profile_edit' %}" class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-semibold py-2">
+                        <i class="fa-solid fa-user-pen me-1"></i> Profilni yangilash
+                    </a>
+                </div>
+            </div>
+
+            <!-- YAQINDA BO'LGAN YUTUQLAR (ACHIEVEMENTS) -->
+            {% if recent_achievements %}
+            <div class="feed-sidebar-card">
+                <div class="feed-sidebar-title">
+                    <i class="fa-solid fa-trophy text-warning"></i>
+                    <span>Maktab Faxrlari & Yutuqlar 🏆</span>
+                </div>
+                <div class="d-flex flex-column gap-3">
+                    {% for ach in recent_achievements %}
+                    <a href="#postCard-{{ ach.id }}" class="text-decoration-none d-flex align-items-start gap-2 p-2 rounded-3 text-secondary-emphasis" style="transition: var(--transition-fast); background: var(--gray-50);">
+                        {% if ach.author.avatar %}
+                            <img src="{{ ach.author.avatar.url }}" alt="{{ ach.author.full_name }}" class="rounded-circle flex-shrink-0" style="width:36px; height:36px; object-fit:cover;">
+                        {% else %}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0" style="width:36px; height:36px; background:#f59e0b; font-size:0.85rem;">
+                                {{ ach.author.first_name|default:ach.author.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                        <div class="overflow-hidden">
+                            <div class="fw-bold small text-truncate">{{ ach.author.full_name }}</div>
+                            <div class="text-muted small text-truncate" style="font-size:0.8rem;">{{ ach.content|truncatechars:45 }}</div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- FAOL O'QUVCHILAR (TOP CONTRIBUTORS) -->
+            {% if active_students %}
+            <div class="feed-sidebar-card">
+                <div class="feed-sidebar-title">
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <span>Faol O'quvchilar</span>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    {% for st in active_students %}
+                    <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded-3" style="background: var(--gray-50);">
+                        <div class="d-flex align-items-center gap-2 overflow-hidden">
+                            {% if st.avatar %}
+                                <img src="{{ st.avatar.url }}" alt="{{ st.full_name }}" class="rounded-circle flex-shrink-0" style="width:34px; height:34px; object-fit:cover;">
+                            {% else %}
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0" style="width:34px; height:34px; background:#0ea5e9; font-size:0.85rem;">
+                                    {{ st.first_name|default:st.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                            <div class="overflow-hidden">
+                                <div class="fw-bold small text-truncate text-primary-emphasis">{{ st.full_name }}</div>
+                                <div class="text-muted small" style="font-size:0.75rem;">{{ st.classroom.name|default:"O'quvchi" }}</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill small fw-bold">
+                            {{ st.p_count }} ta post
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- QOIDALAR VA ESLATMA -->
+            <div class="feed-sidebar-card" style="border-left: 4px solid var(--primary);">
+                <div class="feed-sidebar-title mb-2">
+                    <i class="fa-solid fa-shield-halved text-primary"></i>
+                    <span>Hamjamiyat Qoidalari</span>
+                </div>
+                <ul class="text-muted small ps-3 mb-0" style="line-height: 1.6;">
+                    <li>Barcha postlar va izohlarda o'zaro hurmat saqlansin.</li>
+                    <li>Faqat ta'lim, fan, yutuqlar va maktab hayotiga doir mazmundagi xabarlar ulashing.</li>
+                    <li>Maktab ma'muriyati noo'rin yoki qoidabuzar postlarni ogohlantirishsiz o'chirish huquqiga ega.</li>
+                </ul>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- LIGHTBOX MODAL (RASMNI TO'LIQ KO'RISH UCHUN) -->
+<div class="modal fade" id="imageLightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-header border-0 pb-0 justify-content-end">
+                <button type="button" class="btn btn-dark rounded-circle text-white shadow-none" data-bs-dismiss="modal" style="width:40px; height:40px;">
+                    <i class="fa-solid fa-xmark fs-5"></i>
+                </button>
+            </div>
+            <div class="modal-body text-center p-2">
+                <img id="lightboxImage" src="" alt="Post to'liq ko'rinishi" class="img-fluid rounded-4 shadow-lg" style="max-height:85vh; object-fit:contain;">
+                <div id="lightboxCaption" class="text-white mt-2 fw-semibold"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST BILDIRISHNOMA (Nusxalandi va h.k.) -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+    <div id="feedToast" class="toast align-items-center text-bg-dark border-0 rounded-4 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2" id="feedToastBody">
+                <i class="fa-solid fa-circle-check text-success"></i>
+                <span>Muvaffaqiyatli!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto shadow-none" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+<!-- ===== TELEGRAM USLUBIDAGI POSTNI CHATGA ULASHISH MODALI ===== -->
+<div class="modal fade telegram-share-modal" id="chatShareModal" tabindex="-1" aria-labelledby="chatShareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="telegram-share-header">
+                <div class="telegram-share-title">
+                    <i class="fa-brands fa-telegram text-primary fs-4"></i>
+                    <span>Kimga yuborasiz?</span>
+                    <span class="badge bg-primary rounded-pill small ms-2 d-none" id="telegramSelectedCountBadge">0 ta tanlandi</span>
+                </div>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Qidiruv Maydoni (Telegram kabi) -->
+            <div class="telegram-search-box">
+                <i class="fa-solid fa-magnifying-glass telegram-search-icon"></i>
+                <input type="text" id="shareContactSearch" class="telegram-search-input" placeholder="Qidirish (ism yoki fan bo'yicha)...">
+            </div>
+
+            <!-- Tepadagi Tezkor Kontaktlar (Horizontal Stories/Avatars) -->
+            <div class="telegram-stories-row" id="telegramStoriesRow">
+                <!-- JS orqali to'ldiriladi -->
+            </div>
+
+            <!-- Filtr Tablari -->
+            <div class="telegram-tabs-row">
+                <button type="button" class="telegram-tab-btn active" data-tab="all" onclick="filterShareContacts('all', this)">Barchasi</button>
+                <button type="button" class="telegram-tab-btn" data-tab="teachers" onclick="filterShareContacts('teachers', this)">Ustozlar</button>
+                <button type="button" class="telegram-tab-btn" data-tab="classmates" onclick="filterShareContacts('classmates', this)">Sinfdoshlar</button>
+                <button type="button" class="telegram-tab-btn" data-tab="online" onclick="filterShareContacts('online', this)">🟢 Online</button>
+            </div>
+
+            <!-- Kontaktlar Ro'yxati (Telegram ro'yxati) -->
+            <div class="telegram-contacts-list" id="shareContactsList">
+                <div class="text-center py-4 text-muted small">
+                    <i class="fa-solid fa-spinner fa-spin me-1"></i> Kontaktlar yuklanmoqda...
+                </div>
+            </div>
+
+            <!-- Telegram Pastki Yuborish Paneli -->
+            <div class="telegram-share-footer">
+                <input type="text" id="sharePostComment" class="telegram-comment-input" placeholder="Xabar yozing (ixtiyoriy)...">
+                <button type="button" class="telegram-send-btn" id="telegramSendBtn" onclick="submitTelegramShare()" title="Yuborish" disabled>
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span class="telegram-selected-badge d-none" id="telegramSendCountBadge">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. Rasm yuklash (Dropzone + File Input + Preview)
+    const dropzone = document.getElementById('composerDropzone');
+    const fileInput = document.getElementById('postImageInput');
+    const previewWrap = document.getElementById('imagePreviewContainer');
+    const previewImg = document.getElementById('imagePreviewImg');
+    const previewFilename = document.getElementById('imagePreviewFilename');
+    const removeImgBtn = document.getElementById('removeImageBtn');
+
+    if (dropzone && fileInput) {
+        // Dropzone bosilganda file dialog ochish
+        dropzone.addEventListener('click', function () {
+            fileInput.click();
+        });
+
+        // Drag & drop qo'llab-quvvatlash
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+            });
+        });
+
+        dropzone.addEventListener('drop', function (e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // Fayl tanlanganda
+        fileInput.addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                handleFileSelect(this.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                previewFilename.innerHTML = `<i class="fa-solid fa-image me-1"></i> ${escapeHtml(file.name)} (${formatFileSize(file.size)})`;
+                previewWrap.classList.remove('d-none');
+                dropzone.classList.add('d-none');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Rasmni bekor qilish
+        if (removeImgBtn) {
+            removeImgBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                fileInput.value = '';
+                previewWrap.classList.add('d-none');
+                dropzone.classList.remove('d-none');
+                previewImg.src = '#';
+            });
+        }
+    }
+
+    // 2. Belgilar sanog'i (Char counter)
+    const postTextarea = document.getElementById('postContentInput');
+    const charCounter = document.getElementById('charCounter');
+    if (postTextarea && charCounter) {
+        postTextarea.addEventListener('input', function () {
+            const len = this.value.length;
+            charCounter.textContent = `${len} belgi`;
+            if (len > 800) {
+                charCounter.classList.add('text-warning');
+            } else {
+                charCounter.classList.remove('text-warning');
+            }
+        });
+    }
+
+    // 3. Izohlar AJAX yuborish
+    document.querySelectorAll('.comment-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const postId = this.getAttribute('data-post-id');
+            const inputField = this.querySelector('input[name="content"]');
+            const content = inputField.value.trim();
+            if (!content) return;
+
+            const formData = new FormData();
+            formData.append('content', content);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch(`/feed/post/${postId}/comment/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Yangi izohni ro'yxatga qo'shish
+                    const commentsList = document.getElementById(`commentsList-${postId}`);
+                    const emptyMsg = commentsList.querySelector('.empty-comments-msg');
+                    if (emptyMsg) emptyMsg.remove();
+
+                    const newCommentHtml = `
+                        <div class="d-flex align-items-start gap-2 comment-item" id="commentItem-${data.comment_id}">
+                            ${data.author_avatar ? 
+                                `<img src="${data.author_avatar}" alt="${data.author_name}" class="rounded-circle mt-1 flex-shrink-0" style="width:36px; height:36px; object-fit:cover; border: 1.5px solid var(--border);">` :
+                                `<div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mt-1 flex-shrink-0" style="width:36px; height:36px; background:#4f46e5; font-size:0.85rem;">${data.author_initial}</div>`
+                            }
+                            <div class="comment-bubble flex-grow-1">
+                                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="comment-author-name">${data.author_name}</span>
+                                        ${data.classroom_name ? `<span class="badge bg-light text-secondary border" style="font-size:0.68rem;">${data.classroom_name}</span>` : ''}
+                                    </div>
+                                    <span class="text-muted small" style="font-size:0.75rem;">${data.created_at}</span>
+                                </div>
+                                <div class="comment-content">${escapeHtml(data.content)}</div>
+                            </div>
+                        </div>
+                    `;
+                    commentsList.insertAdjacentHTML('beforeend', newCommentHtml);
+
+                    // Izohlar sonini yangilash
+                    const commentCountBadge = document.getElementById(`commentCount-${postId}`);
+                    if (commentCountBadge) {
+                        commentCountBadge.textContent = data.total_comments;
+                    }
+
+                    // Inputni tozalash
+                    inputField.value = '';
+                    showToast('Izohingiz qo\'shildi!');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                form.submit();
+            });
+        });
+    });
+});
+
+// Emoji qo'shish yordamchisi
+function insertEmoji(emoji) {
+    const textarea = document.getElementById('postContentInput');
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    textarea.value = text.substring(0, start) + emoji + ' ' + text.substring(end);
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = start + emoji.length + 1;
+    textarea.dispatchEvent(new Event('input'));
+}
+
+// Fayl hajmini formatlash
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+// Like toggle AJAX
+function toggleLike(postId) {
+    const likeBtn = document.getElementById(`likeBtn-${postId}`);
+    const likeCountBadge = document.getElementById(`likeCount-${postId}`);
+    const heartIcon = likeBtn.querySelector('i');
+    const likeText = likeBtn.querySelector('.like-text');
+
+    fetch(`/feed/post/${postId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': '{{ csrf_token }}',
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.liked) {
+            likeBtn.classList.add('liked');
+            heartIcon.classList.remove('fa-regular');
+            heartIcon.classList.add('fa-solid');
+            if (likeText) likeText.textContent = "Yoqdi";
+        } else {
+            likeBtn.classList.remove('liked');
+            heartIcon.classList.remove('fa-solid');
+            heartIcon.classList.add('fa-regular');
+            if (likeText) likeText.textContent = "Yoqtirish";
+        }
+        if (likeCountBadge) {
+            likeCountBadge.textContent = data.total_likes;
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        window.location.href = `/feed/post/${postId}/like/`;
+    });
+}
+
+// Izohlar blokini ochish
+function toggleComments(postId) {
+    const section = document.getElementById(`commentsSection-${postId}`);
+    if (section) {
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+        }
+        const input = section.querySelector('input[name="content"]');
+        if (input) input.focus();
+    }
+}
+
+// Lightbox ochish
+function openLightbox(imageUrl, authorName) {
+    const modalImg = document.getElementById('lightboxImage');
+    const modalCap = document.getElementById('lightboxCaption');
+    modalImg.src = imageUrl;
+    modalCap.textContent = authorName ? `${authorName} tomonidan joylangan surat` : '';
+    const myModal = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
+    myModal.show();
+}
+
+let currentSharePostId = null;
+let cachedShareContacts = [];
+let selectedContactIds = new Set();
+let currentFilterTab = 'all';
+
+function openChatShareModal(postId, authorName, snippet) {
+    currentSharePostId = postId;
+    selectedContactIds.clear();
+    updateSelectedStateUI();
+    document.getElementById('sharePostComment').value = '';
+    const searchInput = document.getElementById('shareContactSearch');
+    if (searchInput) searchInput.value = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('chatShareModal'));
+    modal.show();
+
+    if (cachedShareContacts.length === 0) {
+        fetch('/chat/api/share-contacts/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    cachedShareContacts = data.contacts;
+                    renderTelegramStories(cachedShareContacts);
+                    renderShareContacts(cachedShareContacts);
+                }
+            })
+            .catch(() => {
+                document.getElementById('shareContactsList').innerHTML = '<div class="text-center text-muted py-3">Kontaktlarni yuklab bo\'lmadi</div>';
+            });
+    } else {
+        renderTelegramStories(cachedShareContacts);
+        renderShareContacts(cachedShareContacts);
+    }
+}
+
+function renderTelegramStories(contacts) {
+    const row = document.getElementById('telegramStoriesRow');
+    if (!row) return;
+
+    if (!contacts || contacts.length === 0) {
+        row.style.display = 'none';
+        return;
+    }
+    row.style.display = 'flex';
+
+    // Eng faol / birinchi 10 ta kontakt
+    const topContacts = contacts.slice(0, 12);
+    let html = '';
+    topContacts.forEach(c => {
+        const isSelected = selectedContactIds.has(c.id);
+        const avatarHtml = c.avatar 
+            ? `<img src="${c.avatar}" class="telegram-story-avatar-img">`
+            : `<div class="telegram-story-avatar-initials">${c.initial}</div>`;
+
+        html += `
+            <div class="telegram-story-item ${isSelected ? 'selected' : ''}" onclick="toggleSelectContact(${c.id})" id="storyItem_${c.id}">
+                <div class="telegram-story-avatar-wrap">
+                    ${avatarHtml}
+                    ${c.is_online ? '<span class="online-indicator-dot pulse" style="width:11px; height:11px; border:2px solid var(--bg-card); position:absolute; bottom:2px; right:2px;"></span>' : ''}
+                    <span class="telegram-story-check"><i class="fa-solid fa-check"></i></span>
+                </div>
+                <span class="telegram-story-name">${c.first_name}</span>
+            </div>
+        `;
+    });
+    row.innerHTML = html;
+}
+
+function filterShareContacts(tab, btn) {
+    currentFilterTab = tab;
+    document.querySelectorAll('.telegram-tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    applyFilters();
+}
+
+function applyFilters() {
+    const q = (document.getElementById('shareContactSearch').value || '').toLowerCase().trim();
+
+    let filtered = cachedShareContacts.filter(c => {
+        const matchesQuery = !q || c.name.toLowerCase().includes(q) || c.role.toLowerCase().includes(q);
+        if (!matchesQuery) return false;
+
+        if (currentFilterTab === 'teachers') return c.role_type === 'teacher';
+        if (currentFilterTab === 'classmates') return c.role_type === 'student';
+        if (currentFilterTab === 'online') return c.is_online === true;
+        return true;
+    });
+
+    renderShareContacts(filtered);
+}
+
+function renderShareContacts(contacts) {
+    const list = document.getElementById('shareContactsList');
+    if (!contacts || contacts.length === 0) {
+        list.innerHTML = '<div class="text-center text-muted py-4 small">Hech kim topilmadi</div>';
+        return;
+    }
+
+    let html = '';
+    contacts.forEach(c => {
+        const isSelected = selectedContactIds.has(c.id);
+        const avatarHtml = c.avatar 
+            ? `<img src="${c.avatar}" class="telegram-contact-avatar-img">`
+            : `<div class="telegram-contact-avatar-initials">${c.initial}</div>`;
+
+        const statusText = c.is_online 
+            ? `<span class="telegram-contact-sub online"><i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> online</span>`
+            : `<span class="telegram-contact-sub">${c.last_seen || c.role}</span>`;
+
+        html += `
+            <div class="telegram-contact-row ${isSelected ? 'selected' : ''}" onclick="toggleSelectContact(${c.id})" id="contactRow_${c.id}">
+                <div class="telegram-contact-left">
+                    <div class="telegram-contact-avatar-wrap">
+                        ${avatarHtml}
+                        ${c.is_online ? '<span class="online-indicator-dot pulse" style="width:11px; height:11px; border:2px solid var(--bg-card); position:absolute; bottom:1px; right:1px;"></span>' : ''}
+                    </div>
+                    <div class="telegram-contact-info">
+                        <div class="telegram-contact-name">${c.name}</div>
+                        <div>${c.role} &bull; ${statusText}</div>
+                    </div>
+                </div>
+                <div class="telegram-checkbox">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function toggleSelectContact(id) {
+    if (selectedContactIds.has(id)) {
+        selectedContactIds.delete(id);
+    } else {
+        selectedContactIds.add(id);
+    }
+
+    // Row styles update
+    const row = document.getElementById('contactRow_' + id);
+    if (row) {
+        if (selectedContactIds.has(id)) row.classList.add('selected');
+        else row.classList.remove('selected');
+    }
+
+    // Story item update
+    const story = document.getElementById('storyItem_' + id);
+    if (story) {
+        if (selectedContactIds.has(id)) story.classList.add('selected');
+        else story.classList.remove('selected');
+    }
+
+    updateSelectedStateUI();
+}
+
+function updateSelectedStateUI() {
+    const count = selectedContactIds.size;
+    const sendBtn = document.getElementById('telegramSendBtn');
+    const countBadge = document.getElementById('telegramSelectedCountBadge');
+    const sendCountBadge = document.getElementById('telegramSendCountBadge');
+
+    if (count > 0) {
+        sendBtn.disabled = false;
+        countBadge.classList.remove('d-none');
+        countBadge.textContent = `${count} ta tanlandi`;
+        sendCountBadge.classList.remove('d-none');
+        sendCountBadge.textContent = count;
+    } else {
+        sendBtn.disabled = true;
+        countBadge.classList.add('d-none');
+        sendCountBadge.classList.add('d-none');
+    }
+}
+
+document.getElementById('shareContactSearch').addEventListener('input', applyFilters);
+
+function submitTelegramShare() {
+    if (!currentSharePostId || selectedContactIds.size === 0) return;
+
+    const btn = document.getElementById('telegramSendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    const comment = document.getElementById('sharePostComment').value.trim();
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    const formData = new FormData();
+    formData.append('receiver_ids', Array.from(selectedContactIds).join(','));
+    formData.append('comment', comment);
+
+    fetch(`/feed/post/${currentSharePostId}/share/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+            if (typeof showToast === 'function') {
+                showToast(data.message || "Post muvaffaqiyatli ulashildi!");
+            }
+            setTimeout(() => {
+                const modalEl = document.getElementById('chatShareModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                btn.style.background = '';
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+            }, 1000);
+        } else {
+            alert(data.message || "Xatolik yuz berdi");
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        }
+    })
+    .catch(() => {
+        alert("Tarmoq xatosi!");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+    });
+}
+
+
+// ===== Video va Rasm yuklash funksiyalari =====
+function triggerImageUpload() {
+    document.getElementById('postVideoInput').value = '';
+    document.getElementById('videoPreviewContainer').classList.add('d-none');
+    document.getElementById('postImageInput').click();
+}
+function triggerVideoUpload() {
+    document.getElementById('postImageInput').value = '';
+    document.getElementById('imagePreviewContainer').classList.add('d-none');
+    document.getElementById('postVideoInput').click();
+}
+document.addEventListener('DOMContentLoaded', function() {
+    var imgInput = document.getElementById('postImageInput');
+    if (imgInput) {
+        imgInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreviewImg').src = e.target.result;
+                    document.getElementById('imagePreviewFilename').innerHTML = '<i class="fa-solid fa-image me-1"></i>' + imgInput.files[0].name;
+                    document.getElementById('imagePreviewContainer').classList.remove('d-none');
+                    document.getElementById('composerDropzone').classList.add('d-none');
+                    document.getElementById('videoPreviewContainer').classList.add('d-none');
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+    var vidInput = document.getElementById('postVideoInput');
+    if (vidInput) {
+        vidInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                var url = URL.createObjectURL(this.files[0]);
+                document.getElementById('videoPreviewEl').src = url;
+                document.getElementById('videoPreviewFilename').innerHTML = '<i class="fa-solid fa-video me-1"></i>' + this.files[0].name;
+                document.getElementById('videoPreviewContainer').classList.remove('d-none');
+                document.getElementById('composerDropzone').classList.add('d-none');
+                document.getElementById('imagePreviewContainer').classList.add('d-none');
+            }
+        });
+    }
+    var removeImgBtn = document.getElementById('removeImageBtn');
+    if (removeImgBtn) {
+        removeImgBtn.addEventListener('click', function() {
+            document.getElementById('postImageInput').value = '';
+            document.getElementById('imagePreviewContainer').classList.add('d-none');
+            document.getElementById('composerDropzone').classList.remove('d-none');
+        });
+    }
+    var removeVidBtn = document.getElementById('removeVideoBtn');
+    if (removeVidBtn) {
+        removeVidBtn.addEventListener('click', function() {
+            document.getElementById('postVideoInput').value = '';
+            document.getElementById('videoPreviewContainer').classList.add('d-none');
+            document.getElementById('composerDropzone').classList.remove('d-none');
+        });
+    }
+});
+</script>
+{% endblock %}
+
