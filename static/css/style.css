@@ -1816,6 +1816,16 @@ footer {
     }
 }
 
+.login-welcome-subtitle {
+    animation: loginSubtitleFade 2s ease 4s forwards;
+}
+
+@keyframes loginSubtitleFade {
+    to {
+        opacity: 0;
+    }
+}
+
 @keyframes pulse-glow {
 
     0%,
@@ -3537,6 +3547,10 @@ footer {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
+    }
+
+    .login-welcome-subtitle {
+        animation: none !important;
     }
 }
 

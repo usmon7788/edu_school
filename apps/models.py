@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
@@ -64,6 +64,16 @@ class Classroom(models.Model):
         unique_together = ('name', 'school')
 
 
+class CustomUserManager(UserManager):
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault('role', 'admin')
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        if extra_fields.get('role') != 'admin':
+            extra_fields['role'] = 'admin'
+        return super().create_superuser(username, email, password, **extra_fields)
+
+
 class User(AbstractUser):
     ROLE_CHOICES = (
         ('student', "O'quvchi"),
@@ -87,8 +97,13 @@ class User(AbstractUser):
     last_seen = models.DateTimeField(null=True, blank=True, verbose_name="Oxirgi faollik")
     initial_password = models.CharField(max_length=128, blank=True, null=True, verbose_name="Boshlang'ich parol (Admin ko'rishi uchun)")
 
+    objects = CustomUserManager()
+
     def clean(self):
         super().clean()
+        # Superuser yoki xodim bo'lsa rolni avtomatik admin qilish
+        if (self.is_superuser or self.is_staff) and self.role != 'admin':
+            self.role = 'admin'
         # Bitta sinfda maksimal 28 nafar o'quvchi cheklovi
         if self.role == 'student' and self.classroom:
             current_count = User.objects.filter(classroom=self.classroom, role='student').exclude(pk=self.pk).count()
@@ -99,6 +114,8 @@ class User(AbstractUser):
                 })
 
     def save(self, *args, **kwargs):
+        if (self.is_superuser or self.is_staff) and self.role != 'admin':
+            self.role = 'admin'
         self.clean()
         super().save(*args, **kwargs)
 

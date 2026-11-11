@@ -27,12 +27,16 @@ def switch_language(request, lang_code):
 def dashboard_redirect(request):
     if not request.user.is_authenticated:
         return redirect('login')
-    if request.user.role == 'teacher':
+    # Superuser, xodim yoki admin har doim boshqaruv paneliga yo'naltiriladi
+    if request.user.is_superuser or request.user.is_staff or request.user.role == 'admin':
+        if request.user.role != 'admin':
+            request.user.role = 'admin'
+            request.user.save(update_fields=['role'])
+        return redirect('admin_panel_dashboard')
+    elif request.user.role == 'teacher':
         return redirect('teacher_dashboard')
     elif request.user.role == 'student':
         return redirect('student_dashboard')
-    elif request.user.role == 'admin' or request.user.is_staff:
-        return redirect('admin_panel_dashboard')
     return redirect('student_dashboard')
 
 
@@ -51,12 +55,15 @@ def login_view(request):
             login(request, user)
             messages.success(request, f"Xush kelibsiz, {user.full_name}!")
             # Roliga qarab yo'naltirish
-            if user.role == 'teacher':
+            if user.is_superuser or user.is_staff or user.role == 'admin':
+                if user.role != 'admin':
+                    user.role = 'admin'
+                    user.save(update_fields=['role'])
+                return redirect('admin_panel_dashboard')
+            elif user.role == 'teacher':
                 return redirect('teacher_dashboard')
             elif user.role == 'student':
                 return redirect('student_dashboard')
-            elif user.role == 'admin' or user.is_staff:
-                return redirect('admin_panel_dashboard')
             return redirect('student_dashboard')
         else:
             messages.error(request, "Login yoki parol noto'g'ri!")
@@ -86,10 +93,10 @@ def logout_view(request):
 @login_required
 def student_dashboard(request):
     user = request.user
+    if user.is_superuser or user.is_staff or user.role == 'admin':
+        return redirect('admin_panel_dashboard')
     if user.role == 'teacher':
         return redirect('teacher_dashboard')
-    if user.role == 'admin' and not user.classroom:
-        return redirect('admin_panel_dashboard')
 
     classroom = user.classroom
     school = user.school or (classroom.school if classroom else None)
@@ -192,7 +199,7 @@ def student_dashboard(request):
 @login_required
 def student_grades(request):
     user = request.user
-    if user.role != 'student':
+    if user.role != 'student' or user.is_staff or user.is_superuser:
         return redirect('dashboard_redirect')
 
     grades = Grade.objects.filter(student=user).select_related('subject', 'teacher')
@@ -222,7 +229,7 @@ def student_grades(request):
 @login_required
 def student_timetable(request):
     user = request.user
-    if user.role != 'student':
+    if user.role != 'student' or user.is_staff or user.is_superuser:
         return redirect('dashboard_redirect')
 
     classroom = user.classroom
@@ -253,7 +260,7 @@ def student_timetable(request):
 @login_required
 def student_homework(request):
     user = request.user
-    if user.role != 'student':
+    if user.role != 'student' or user.is_staff or user.is_superuser:
         return redirect('dashboard_redirect')
 
     classroom = user.classroom
@@ -271,7 +278,7 @@ def student_homework(request):
 @login_required
 def student_attendance(request):
     user = request.user
-    if user.role != 'student':
+    if user.role != 'student' or user.is_staff or user.is_superuser:
         return redirect('dashboard_redirect')
 
     attendances_qs = Attendance.objects.filter(student=user).select_related('classroom', 'subject', 'teacher').order_by('-date')

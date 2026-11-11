@@ -51,35 +51,11 @@
                 <!-- Nav links -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
                     {% if user.is_authenticated %}
-                    {% if user.role == 'student' %}
+                    {% if user.role == 'admin' or user.is_staff or user.is_superuser %}
                     <li class="nav-item">
-                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}"
-                            href="{% url 'student_dashboard' %}">
-                            <i class="fa-solid fa-house"></i> {{ t.dashboard }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_grades' %}active{% endif %}"
-                            href="{% url 'student_grades' %}">
-                            <i class="fa-solid fa-award"></i> {{ t.grades }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_timetable' %}active{% endif %}"
-                            href="{% url 'student_timetable' %}">
-                            <i class="fa-solid fa-calendar-days"></i> {{ t.timetable }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_homework' %}active{% endif %}"
-                            href="{% url 'student_homework' %}">
-                            <i class="fa-solid fa-book-open"></i> {{ t.homework }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_attendance' %}active{% endif %}"
-                            href="{% url 'student_attendance' %}">
-                            <i class="fa-solid fa-user-check"></i> {{ t.attendance }}
+                        <a class="nav-link-custom nav-link-admin {% if request.resolver_match.app_name == 'admin_panel' or 'admin' in request.resolver_match.url_name %}active{% endif %}"
+                            href="{% url 'admin_panel_dashboard' %}">
+                            <i class="fa-solid fa-shield-halved"></i> {{ t.admin_panel }}
                         </a>
                     </li>
                     {% elif user.role == 'teacher' %}
@@ -113,11 +89,35 @@
                             <i class="fa-solid fa-calendar-week"></i> {{ t.timetable }}
                         </a>
                     </li>
-                    {% endif %}
-                    {% if user.role == 'admin' or user.is_staff or user.is_superuser %}
+                    {% elif user.role == 'student' %}
                     <li class="nav-item">
-                        <a class="nav-link-custom nav-link-admin" href="{% url 'admin_panel_dashboard' %}">
-                            <i class="fa-solid fa-shield-halved"></i> {{ t.admin_panel }}
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}"
+                            href="{% url 'student_dashboard' %}">
+                            <i class="fa-solid fa-house"></i> {{ t.dashboard }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_grades' %}active{% endif %}"
+                            href="{% url 'student_grades' %}">
+                            <i class="fa-solid fa-award"></i> {{ t.grades }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_timetable' %}active{% endif %}"
+                            href="{% url 'student_timetable' %}">
+                            <i class="fa-solid fa-calendar-days"></i> {{ t.timetable }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_homework' %}active{% endif %}"
+                            href="{% url 'student_homework' %}">
+                            <i class="fa-solid fa-book-open"></i> {{ t.homework }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'student_attendance' %}active{% endif %}"
+                            href="{% url 'student_attendance' %}">
+                            <i class="fa-solid fa-user-check"></i> {{ t.attendance }}
                         </a>
                     </li>
                     {% endif %}
@@ -184,7 +184,11 @@
                             <div class="nav-user-info d-none d-md-block">
                                 <span class="nav-user-name">{{ user.full_name }}</span>
                                 <span class="nav-user-role">
-                                    {{ user.role|t_role:current_lang }}
+                                    {% if user.role == 'admin' or user.is_staff or user.is_superuser %}
+                                        {{ 'admin'|t_role:current_lang }}
+                                    {% else %}
+                                        {{ user.role|t_role:current_lang }}
+                                    {% endif %}
                                 </span>
                             </div>
                             <i class="fa-solid fa-chevron-down nav-user-chevron d-none d-md-block"></i>

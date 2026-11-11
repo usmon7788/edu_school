@@ -67,10 +67,10 @@
                                 <span class="fw-bold fs-5 text-primary-emphasis" style="font-family:'Outfit',sans-serif;">
                                     {{ user.full_name }}
                                 </span>
-                                <span class="badge post-badge-role {% if user.role == 'student' %}post-badge-student{% elif user.role == 'teacher' %}post-badge-teacher{% else %}post-badge-admin{% endif %}">
-                                    {% if user.role == 'student' %}<i class="fa-solid fa-graduation-cap"></i> O'quvchi
+                                <span class="badge post-badge-role {% if user.role == 'admin' or user.is_staff or user.is_superuser %}post-badge-admin{% elif user.role == 'teacher' %}post-badge-teacher{% else %}post-badge-student{% endif %}">
+                                    {% if user.role == 'admin' or user.is_staff or user.is_superuser %}<i class="fa-solid fa-shield-halved"></i> Admin
                                     {% elif user.role == 'teacher' %}<i class="fa-solid fa-chalkboard-user"></i> Ustoz
-                                    {% else %}<i class="fa-solid fa-shield-halved"></i> Admin{% endif %}
+                                    {% else %}<i class="fa-solid fa-graduation-cap"></i> O'quvchi{% endif %}
                                 </span>
                             </div>
                             <div class="text-muted small mt-1">
@@ -511,8 +511,12 @@
                     <div>
                         <h6 class="fw-bold mb-0 text-primary-emphasis fs-5">{{ user.full_name }}</h6>
                         <div class="text-muted small">@{{ user.username }}</div>
-                        <span class="badge post-badge-role mt-1 {% if user.role == 'student' %}post-badge-student{% elif user.role == 'teacher' %}post-badge-teacher{% else %}post-badge-admin{% endif %}">
-                            {{ user.get_role_display }}
+                        <span class="badge post-badge-role mt-1 {% if user.role == 'admin' or user.is_staff or user.is_superuser %}post-badge-admin{% elif user.role == 'teacher' %}post-badge-teacher{% else %}post-badge-student{% endif %}">
+                            {% if user.role == 'admin' or user.is_staff or user.is_superuser %}
+                                {{ 'admin'|t_role:current_lang }}
+                            {% else %}
+                                {{ user.role|t_role:current_lang }}
+                            {% endif %}
                         </span>
                     </div>
                 </div>
