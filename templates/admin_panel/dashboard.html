@@ -63,6 +63,9 @@
             </div>
         </div>
         <div style="position:relative;z-index:2;" class="d-flex flex-column gap-2">
+            <a href="{% url 'admin_timetable' %}" class="btn btn-warning text-dark fw-bold py-2 px-3 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="fa-solid fa-calendar-days"></i> {{ t.timetable }} ({{ total_schedules }})
+            </a>
             <a href="{% url 'create_classroom' %}" class="btn btn-info text-white fw-bold py-2 px-3 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
                 <i class="fa-solid fa-chalkboard"></i> {{ t.create_classroom }}
             </a>

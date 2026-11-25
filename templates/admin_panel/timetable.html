@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load lang_tags %}
+
+{% block title %}{{ t.timetable }} - {{ t.admin_panel }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Sahifa sarlavhasi -->
+    <div class="page-header-box anim-1 flex-wrap gap-3">
+        <div>
+            <h1 class="page-header-title">
+                <i class="fa-solid fa-calendar-days text-primary me-2"></i> {{ t.timetable }}
+            </h1>
+            <p class="page-header-subtitle">
+                Dushanba–Shanba to'liq dars jadvali boshqaruvi (Yakshanba — dam olish kuni)
+            </p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="badge bg-primary text-white px-3 py-2 fw-bold rounded-pill shadow-sm">
+                <i class="fa-solid fa-calendar-check me-1"></i> {{ t.today }}: {{ today_weekday|t_day:current_lang }}
+            </span>
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="auto_generate_all">
+                {% if selected_class %}<input type="hidden" name="class_id" value="{{ selected_class.id }}">{% endif %}
+                <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 py-2 fw-semibold shadow-sm"
+                        onclick="return confirm('Barcha sinflar uchun Dushanba-Shanba to\'liq jadvali qayta tuzilsinmi?')">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Barcha sinflarga jadval tuzish
+                </button>
+            </form>
+            <a href="{% url 'admin_panel_dashboard' %}" class="btn-secondary-custom">
+                <i class="fa-solid fa-arrow-left me-1"></i> {{ t.back }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Sinf tanlash va yangi fan / dars qo'shish -->
+    <div class="row g-4 mb-4 anim-2">
+        <div class="col-lg-5">
+            <div class="dash-card border-0 shadow-sm h-100">
+                <div class="dash-card-header bg-light">
+                    <h5 class="dash-card-title mb-0">
+                        <span class="dash-card-title-icon" style="background:var(--primary-light);color:var(--primary);">
+                            <i class="fa-solid fa-chalkboard"></i>
+                        </span>
+                        Sinfni tanlash
+                    </h5>
+                </div>
+                <div class="dash-card-body p-4">
+                    {% if classrooms %}
+                    <form method="get" class="d-flex gap-2 mb-3">
+                        <select name="class_id" class="form-select" onchange="this.form.submit()">
+                            {% for cls in classrooms %}
+                                <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>
+                                    {{ cls.name }} ({{ cls.school.number }}-maktab)
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary-custom text-nowrap">Ko'rish</button>
+                    </form>
+                    {% if selected_class %}
+                    <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="small">
+                            <div class="fw-bold text-dark">{{ selected_class.name }} sinfi</div>
+                            <div class="text-muted">Sinf rahbari: <strong>{{ selected_class.class_teacher.full_name|default:"—" }}</strong></div>
+                        </div>
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="auto_generate">
+                            <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+                            <button type="submit" class="btn btn-outline-success btn-sm rounded-pill fw-semibold">
+                                <i class="fa-solid fa-arrows-rotate me-1"></i> Jadvalni to'ldirish
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="alert alert-warning mb-0">
+                        Hozircha sinflar yo'q. <a href="{% url 'create_classroom' %}" class="fw-bold">Sinf yaratish</a>
+                    </div>
+                    {% endif %}
+
+                    <!-- Yangi fan qo'shish -->
+                    <hr class="my-3">
+                    <form method="post" class="row g-2 align-items-end">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_subject">
+                        {% if selected_class %}<input type="hidden" name="class_id" value="{{ selected_class.id }}">{% endif %}
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Yangi fan qo'shish</label>
+                            <input type="text" name="subject_name" class="form-control form-control-sm" placeholder="Masalan: Chizmachilik" required>
+                        </div>
+                        <div class="col-2">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Kod</label>
+                            <input type="text" name="subject_code" class="form-control form-control-sm" placeholder="DRAW">
+                        </div>
+                        <div class="col-3">
+                            <button type="submit" class="btn btn-outline-primary btn-sm w-100 fw-semibold">
+                                <i class="fa-solid fa-plus me-1"></i> Fan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dars qo'shish / tahrirlash formasi -->
+        <div class="col-lg-7">
+            <div class="dash-card border-0 shadow-sm h-100">
+                <div class="dash-card-header bg-light">
+                    <h5 class="dash-card-title mb-0">
+                        <span class="dash-card-title-icon" style="background:rgba(16,185,129,0.15);color:#059669;">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                        </span>
+                        Jadvalga dars qo'shish / yangilash
+                    </h5>
+                </div>
+                <div class="dash-card-body p-4">
+                    {% if selected_class %}
+                    <form method="post" class="row g-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_lesson">
+                        <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold text-secondary">Hafta kuni</label>
+                            <select name="day_of_week" class="form-select form-select-sm" required>
+                                {% for d_num, d_name in days_choices %}
+                                    <option value="{{ d_num }}">{{ d_num|t_day:current_lang }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-secondary">Dars soati</label>
+                            <select name="lesson_number" class="form-select form-select-sm" required>
+                                {% for n in lesson_numbers %}
+                                    <option value="{{ n }}">{{ n }}-dars</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold text-secondary">{{ t.subject }}</label>
+                            <select name="subject_id" class="form-select form-select-sm" required>
+                                <option value="">— {{ t.select_subject }} —</option>
+                                {% for sub in subjects %}
+                                    <option value="{{ sub.id }}">{{ sub.name|t_sub:current_lang }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">{{ t.teacher }}</label>
+                            <select name="teacher_id" class="form-select form-select-sm">
+                                <option value="">— Ixtiyoriy —</option>
+                                {% for tch in teachers %}
+                                    <option value="{{ tch.id }}">{{ tch.full_name }} ({% if tch.subject %}{{ tch.subject.name|t_sub:current_lang }}{% else %}—{% endif %})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-secondary">{{ t.room_number }}</label>
+                            <input type="text" name="room_number" class="form-control form-control-sm" placeholder="204" value="204">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary-custom btn-sm w-100 py-2">
+                                <i class="fa-solid fa-save me-1"></i> {{ t.save }}
+                            </button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <p class="text-muted mb-0">Jadval tahrirlash uchun avval sinf yarating.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Haftalik Dars Jadvali (Dushanba–Shanba + Yakshanba Dam olish kuni) -->
+    {% if selected_class %}
+    <div class="row g-4 anim-3">
+        {% for day in days_data %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card card-modern h-100 {% if day.is_rest_day %}border-warning border-2{% elif day.day_num == today_weekday %}timetable-day-today{% else %}timetable-day-card{% endif %} p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                        <i class="fa-solid {% if day.is_rest_day %}fa-sun text-warning{% else %}fa-calendar-day text-primary{% endif %}"></i>
+                        {{ day.day_num|t_day:current_lang }}
+                    </h5>
+                    {% if day.is_rest_day %}
+                        <span class="badge bg-warning text-dark px-3 py-1 rounded-pill small fw-bold">
+                            <i class="fa-solid fa-mug-hot me-1"></i> Dam olish kuni
+                        </span>
+                    {% elif day.day_num == today_weekday %}
+                        <span class="badge bg-success text-white px-3 py-1 rounded-pill small fw-bold">
+                            <i class="fa-solid fa-circle-dot me-1"></i> {{ t.today }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex flex-column gap-2 flex-grow-1">
+                    {% if day.is_rest_day %}
+                        <div class="text-center py-5 text-muted my-auto">
+                            <i class="fa-solid fa-umbrella-beach fs-1 text-warning mb-2"></i>
+                            <h6 class="fw-bold text-dark mb-1">Yakshanba — Dam olish kuni!</h6>
+                            <p class="small mb-0">Ushbu kunda darslar qo'yilmaydi. Barcha o'quvchi va ustozlar uchun dam olish kuni.</p>
+                        </div>
+                    {% elif day.lessons %}
+                        {% for lesson in day.lessons %}
+                        <div class="timeline-item d-flex align-items-center justify-content-between gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary text-white rounded-pill px-2 py-1 fw-bold" style="font-size: 0.75rem; min-width: 24px;">
+                                    {{ lesson.lesson_number }}
+                                </span>
+                                <div>
+                                    <div class="fw-bold text-dark small">{{ lesson.subject.name|t_sub:current_lang }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-user-tie text-secondary me-1"></i> {{ lesson.teacher.full_name|default:"Ustoz biriktirilmagan" }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="text-end">
+                                    <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.72rem;">
+                                        {{ lesson.room_number|default:"-" }}-xona
+                                    </span>
+                                    {% if lesson.start_time %}
+                                    <div class="text-muted fw-semibold mt-1" style="font-size: 0.68rem;">
+                                        {{ lesson.start_time|time:"H:i" }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_lesson">
+                                    <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+                                    <input type="hidden" name="schedule_id" value="{{ lesson.id }}">
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="O'chirish">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5 text-muted my-auto">
+                            <i class="fa-solid fa-calendar-xmark fs-2 text-secondary opacity-50 mb-2"></i>
+                            <p class="small mb-0 fw-medium">{{ t.no_lessons_day }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

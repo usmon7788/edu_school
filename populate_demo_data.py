@@ -5,39 +5,42 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'root.settings')
 django.setup()
 
 from apps.models import School, Subject, Classroom, User, Grade, Schedule, Homework, Attendance
+from apps.schedule_utils import DEFAULT_SCHOOLS, DEFAULT_SUBJECTS, generate_full_weekly_schedule
 from django.utils import timezone
 from datetime import timedelta, date
+
 
 def create_data():
     print("Namunaviy ma'lumotlar yaratilmoqda...")
 
     # 1. Maktablar
-    school1, _ = School.objects.get_or_create(
-        number=21,
-        defaults={'name': "Ixtisoslashtirilgan umumta'lim maktabi", 'address': "Toshkent shahri, Chilonzor tumani", 'phone': "+998 71 200 21 21"}
-    )
-    school2, _ = School.objects.get_or_create(
-        number=5,
-        defaults={'name': "Davlat umumta'lim maktabi", 'address': "Toshkent shahri, Yunusobod tumani", 'phone': "+998 71 200 05 05"}
-    )
+    schools = []
+    for s_data in DEFAULT_SCHOOLS:
+        school, _ = School.objects.get_or_create(
+            number=s_data['number'],
+            defaults={
+                'name': s_data['name'],
+                'address': s_data['address'],
+                'phone': s_data['phone'],
+            },
+        )
+        schools.append(school)
+    school1 = schools[0]
+    school2 = schools[1] if len(schools) > 1 else school1
 
-    # 2. Fanlar
-    subjects_data = [
-        ("Matematika", "MATH", "fa-calculator"),
-        ("Ona tili va adabiyot", "UZB", "fa-book-bookmark"),
-        ("Ingliz tili", "ENG", "fa-earth-americas"),
-        ("Fizika", "PHYS", "fa-atom"),
-        ("Kimyo", "CHEM", "fa-flask-vial"),
-        ("Biologiya", "BIO", "fa-dna"),
-        ("Informatika", "CS", "fa-laptop-code"),
-        ("Tarix", "HIST", "fa-landmark"),
-    ]
+    # Mavjud admin foydalanuvchilariga maktab biriktirish (agar bo'sh bo'lsa)
+    User.objects.filter(role='admin', school__isnull=True).update(school=school1)
+
+    # 2. Fanlar (12 ta asosiy maktab fani)
     subjects = {}
-    for name, code, icon in subjects_data:
-        sub, _ = Subject.objects.get_or_create(name=name, defaults={'code': code, 'icon': icon})
+    for name, code, icon in DEFAULT_SUBJECTS:
+        sub, _ = Subject.objects.get_or_create(
+            name=name,
+            defaults={'code': code, 'icon': icon},
+        )
         subjects[name] = sub
 
-    # 3. Foydalanuvchilar: Admin
+    # 3. Admin (agar umuman admin bo'lmasa)
     if not User.objects.filter(username='admin').exists():
         admin_user = User.objects.create_superuser('admin', 'admin@maktab.uz', 'admin123')
         admin_user.role = 'admin'
@@ -47,50 +50,76 @@ def create_data():
         admin_user.save()
         print("Admin yaratildi: login: admin, parol: admin123")
 
-    # 4. Ustozlar
-    teacher1, created = User.objects.get_or_create(
-        username='teacher1',
-        defaults={
-            'first_name': "Anvar",
-            'last_name': "Qodirov",
-            'role': 'teacher',
-            'school': school1,
-            'subject': subjects["Matematika"],
-            'phone': "+998 90 111 22 33",
-            'bio': "15 yillik tajribaga ega Oliy toifali matematika o'qituvchisi."
-        }
-    )
-    if created:
-        teacher1.set_password('12345678')
-        teacher1.save()
+    # 4. Ustozlar (har bir asosiy fan uchun ustoz)
+    teachers_spec = [
+        ('teacher1', "Anvar", "Qodirov", "Matematika", "+998 90 111 22 33",
+         "15 yillik tajribaga ega Oliy toifali matematika o'qituvchisi.", school1),
+        ('teacher2', "Nodira", "Rahimova", "Ingliz tili", "+998 90 222 33 44",
+         "IELTS 8.5 sohibi, zamonaviy interaktiv metodlar mutaxassisi.", school1),
+        ('teacher3', "Dilshod", "Karimov", "Fizika", "+998 90 333 44 55",
+         "Fizika va astronomiya fanlari bo'yicha olimpiada murabbiyi.", school1),
+        ('teacher4', "Malika", "Tursunova", "Ona tili va adabiyot", "+998 90 444 55 66",
+         "Ona tili va adabiyot fani o'qituvchisi, ko'plab maqolalar muallifi.", school1),
+        ('teacher5', "Azizbek", "Nazarov", "Informatika", "+998 90 555 66 77",
+         "Dasturlash va IT texnologiyalar yo'nalishi ustozi.", school1),
+        ('teacher6', "Gulnora", "Xasanova", "Kimyo", "+998 90 666 77 88",
+         "Kimyo laboratoriyasi rahbari va tajribali pedagog.", school1),
+        ('teacher7', "Rustam", "Alimov", "Tarix", "+998 90 777 88 99",
+         "O'zbekiston va jahon tarixi fani o'qituvchisi.", school1),
+        ('teacher8', "Zuhra", "Mirzayeva", "Biologiya", "+998 90 888 99 00",
+         "Biologiya va ekologiya fanlari o'qituvchisi.", school1),
+    ]
+    teachers = {}
+    for un, fn, ln, sub_name, phone, bio, sch in teachers_spec:
+        t_obj, created = User.objects.get_or_create(
+            username=un,
+            defaults={
+                'first_name': fn,
+                'last_name': ln,
+                'role': 'teacher',
+                'school': sch,
+                'subject': subjects[sub_name],
+                'phone': phone,
+                'bio': bio,
+                'initial_password': '12345678',
+            },
+        )
+        if created:
+            t_obj.set_password('12345678')
+            t_obj.save()
+        elif not t_obj.initial_password:
+            t_obj.initial_password = '12345678'
+            t_obj.save(update_fields=['initial_password'])
+        teachers[un] = t_obj
 
-    teacher2, created = User.objects.get_or_create(
-        username='teacher2',
-        defaults={
-            'first_name': "Nodira",
-            'last_name': "Rahimova",
-            'role': 'teacher',
-            'school': school1,
-            'subject': subjects["Ingliz tili"],
-            'phone': "+998 90 222 33 44",
-            'bio': "IELTS 8.5 sohibi, zamonaviy interaktiv metodlar mutaxassisi."
-        }
-    )
-    if created:
-        teacher2.set_password('12345678')
-        teacher2.save()
+    teacher1 = teachers['teacher1']
+    teacher2 = teachers['teacher2']
+    teacher3 = teachers['teacher3']
+    teacher4 = teachers['teacher4']
+    teacher5 = teachers['teacher5']
 
-    # 5. Sinflar (28 nafar limit bilan)
-    class_9a, _ = Classroom.objects.get_or_create(
-        name="9-A",
-        school=school1,
-        defaults={'grade_level': 9, 'class_teacher': teacher1, 'max_students': 28}
-    )
-    class_9b, _ = Classroom.objects.get_or_create(
-        name="9-B",
-        school=school1,
-        defaults={'grade_level': 9, 'class_teacher': teacher2, 'max_students': 28}
-    )
+    # 5. Sinflar (8-A, 9-A, 9-B, 10-A, 11-A)
+    classrooms_spec = [
+        ("9-A", 9, school1, teacher1),
+        ("9-B", 9, school1, teacher2),
+        ("10-A", 10, school1, teacher3),
+        ("11-A", 11, school1, teacher4),
+        ("8-A", 8, school1, teacher5),
+    ]
+    classrooms = {}
+    for cname, glevel, sch, cteacher in classrooms_spec:
+        cls, _ = Classroom.objects.get_or_create(
+            name=cname,
+            school=sch,
+            defaults={'grade_level': glevel, 'class_teacher': cteacher, 'max_students': 28},
+        )
+        classrooms[cname] = cls
+
+    class_9a = classrooms["9-A"]
+    class_9b = classrooms["9-B"]
+    class_10a = classrooms["10-A"]
+    class_11a = classrooms["11-A"]
+    class_8a = classrooms["8-A"]
 
     # 6. O'quvchilar
     student1, created = User.objects.get_or_create(
@@ -104,22 +133,30 @@ def create_data():
             'phone': "+998 99 987 65 43",
             'address': "Toshkent shahri, Chilonzor 9-mavze",
             'birth_date': date(2010, 5, 14),
-            'bio': "Dasturlash va aniq fanlarga qiziqaman."
-        }
+            'bio': "Dasturlash va aniq fanlarga qiziqaman.",
+            'initial_password': '12345678',
+        },
     )
     if created:
         student1.set_password('12345678')
         student1.save()
 
-    # Yana 5 ta o'quvchi qo'shamiz (9-A sinfiga)
-    students_names = [
-        ("Madina", "Karimova", "student2"),
-        ("Sardor", "Umarov", "student3"),
-        ("Zilola", "Rustamova", "student4"),
-        ("Bobur", "Toshmatov", "student5"),
-        ("Kamola", "Saidova", "student6"),
+    students_list = [
+        ("Madina", "Karimova", "student2", class_9a),
+        ("Sardor", "Umarov", "student3", class_9a),
+        ("Zilola", "Rustamova", "student4", class_9a),
+        ("Bobur", "Toshmatov", "student5", class_9a),
+        ("Kamola", "Saidova", "student6", class_9a),
+        ("Dilnoza", "Yusupova", "student7", class_9b),
+        ("Behruz", "Ismoilov", "student8", class_9b),
+        ("Sevinch", "Raxmatova", "student9", class_10a),
+        ("Doston", "Mamatov", "student10", class_10a),
+        ("Asal", "Qosimova", "student11", class_11a),
+        ("Temur", "Ergashev", "student12", class_11a),
+        ("Farzona", "Sobirova", "student13", class_8a),
+        ("Javohir", "Xolmatov", "student14", class_8a),
     ]
-    for fn, ln, un in students_names:
+    for fn, ln, un, cls in students_list:
         st, cr = User.objects.get_or_create(
             username=un,
             defaults={
@@ -127,108 +164,92 @@ def create_data():
                 'last_name': ln,
                 'role': 'student',
                 'school': school1,
-                'classroom': class_9a,
+                'classroom': cls,
                 'phone': "+998 90 555 00 11",
-                'address': "Toshkent shahri"
-            }
+                'address': "Toshkent shahri",
+                'initial_password': '12345678',
+            },
         )
         if cr:
             st.set_password('12345678')
             st.save()
 
-    # 7. Baholar (Grade)
-    Grade.objects.get_or_create(
-        student=student1,
-        subject=subjects["Matematika"],
-        teacher=teacher1,
-        date=timezone.now().date(),
-        defaults={'grade': 5, 'comment': "Tenglamalar sistemasini a'lo yechdi"}
-    )
-    Grade.objects.get_or_create(
-        student=student1,
-        subject=subjects["Ingliz tili"],
-        teacher=teacher2,
-        date=timezone.now().date() - timedelta(days=1),
-        defaults={'grade': 5, 'comment': "Speaking va Vocabulary mavzusi"}
-    )
-    Grade.objects.get_or_create(
-        student=student1,
-        subject=subjects["Fizika"],
-        teacher=teacher1,
-        date=timezone.now().date() - timedelta(days=2),
-        defaults={'grade': 4, 'comment': "Nyuton qonunlari bo'yicha masalalar"}
-    )
-    Grade.objects.get_or_create(
-        student=student1,
-        subject=subjects["Matematika"],
-        teacher=teacher1,
-        date=timezone.now().date() - timedelta(days=4),
-        defaults={'grade': 5, 'comment': "Nazorat ishi"}
-    )
+    # 7. To'liq haftalik dars jadvali (Dushanba-Shanba to'liq, Yakshanba dam olish kuni)
+    for cls in Classroom.objects.all():
+        generate_full_weekly_schedule(cls, overwrite=True, lessons_per_day=5)
 
-    # 8. Dars jadvali (Schedule)
-    schedule_data = [
-        # Dushanba (1)
-        (1, 1, subjects["Matematika"], teacher1, "204", "08:30:00", "09:15:00"),
-        (1, 2, subjects["Ona tili va adabiyot"], None, "205", "09:25:00", "10:10:00"),
-        (1, 3, subjects["Ingliz tili"], teacher2, "301", "10:20:00", "11:05:00"),
-        (1, 4, subjects["Fizika"], teacher1, "204", "11:25:00", "12:10:00"),
-        # Seshanba (2)
-        (2, 1, subjects["Informatika"], None, "Kompyuter xonasi", "08:30:00", "09:15:00"),
-        (2, 2, subjects["Matematika"], teacher1, "204", "09:25:00", "10:10:00"),
-        (2, 3, subjects["Kimyo"], None, "Kimyo laboratoriyasi", "10:20:00", "11:05:00"),
-        # Chorshanba (3)
-        (3, 1, subjects["Ingliz tili"], teacher2, "301", "08:30:00", "09:15:00"),
-        (3, 2, subjects["Biologiya"], None, "108", "09:25:00", "10:10:00"),
-        (3, 3, subjects["Tarix"], None, "210", "10:20:00", "11:05:00"),
-        # Payshanba (4)
-        (4, 1, subjects["Matematika"], teacher1, "204", "08:30:00", "09:15:00"),
-        (4, 2, subjects["Fizika"], teacher1, "204", "09:25:00", "10:10:00"),
-        # Juma (5)
-        (5, 1, subjects["Ona tili va adabiyot"], None, "205", "08:30:00", "09:15:00"),
-        (5, 2, subjects["Informatika"], None, "Kompyuter xonasi", "09:25:00", "10:10:00"),
-        # Shanba (6)
-        (6, 1, subjects["Ingliz tili"], teacher2, "301", "08:30:00", "09:15:00"),
-        (6, 2, subjects["Tarix"], None, "210", "09:25:00", "10:10:00"),
+    # 8. Baholar (Grade)
+    today = timezone.now().date()
+    grades_spec = [
+        (student1, "Matematika", teacher1, today, 5, "Tenglamalar sistemasini a'lo yechdi"),
+        (student1, "Ingliz tili", teacher2, today - timedelta(days=1), 5, "Speaking va Vocabulary mavzusi"),
+        (student1, "Fizika", teacher3, today - timedelta(days=2), 4, "Nyuton qonunlari bo'yicha masalalar"),
+        (student1, "Informatika", teacher5, today - timedelta(days=3), 5, "Python algoritmlari"),
+        (student1, "Ona tili va adabiyot", teacher4, today - timedelta(days=4), 5, "Insho yozish"),
     ]
-    for d, num, sub, tchr, room, st, et in schedule_data:
-        Schedule.objects.get_or_create(
-            classroom=class_9a,
-            day_of_week=d,
-            lesson_number=num,
-            defaults={'subject': sub, 'teacher': tchr, 'room_number': room, 'start_time': st, 'end_time': et}
+    for st, sub_name, tch, dt, val, cmt in grades_spec:
+        Grade.objects.get_or_create(
+            student=st,
+            subject=subjects[sub_name],
+            teacher=tch,
+            date=dt,
+            defaults={'grade': val, 'comment': cmt},
         )
 
     # 9. Uy vazifalari (Homework)
-    Homework.objects.get_or_create(
-        classroom=class_9a,
-        subject=subjects["Matematika"],
-        teacher=teacher1,
-        title="Kvadrat tenglamalarni yechish",
-        defaults={
-            'description': "Darslikdagi 145-148 mashqlarni to'liq yechish va daftarga yozish. Javoblarni tekshirish.",
-            'due_date': timezone.now().date() + timedelta(days=2)
-        }
-    )
-    Homework.objects.get_or_create(
-        classroom=class_9a,
-        subject=subjects["Ingliz tili"],
-        teacher=teacher2,
-        title="Unit 4: Future Technologies Essay",
-        defaults={
-            'description': "Write an essay of 150-200 words on how AI is changing education and daily life.",
-            'due_date': timezone.now().date() + timedelta(days=3)
-        }
-    )
+    homeworks_spec = [
+        (class_9a, "Matematika", teacher1, "Kvadrat tenglamalarni yechish",
+         "Darslikdagi 145-148 mashqlarni to'liq yechish va daftarga yozish. Javoblarni tekshirish.", 2),
+        (class_9a, "Ingliz tili", teacher2, "Unit 4: Future Technologies Essay",
+         "Write an essay of 150-200 words on how AI is changing education and daily life.", 3),
+        (class_9a, "Fizika", teacher3, "Mexanik harakat va tezlik",
+         "12-mavzuni o'qib kelish va 45-betdagi 1-4 masalalarni yechish.", 2),
+        (class_9b, "Ingliz tili", teacher2, "Grammar: Conditional Sentences",
+         "Workbook pages 34-36, exercises 1-5.", 3),
+        (class_10a, "Fizika", teacher3, "Termodinamika qonunlari",
+         "Laboratoriya daftariga tajriba xulosalarini rasmiylashtirish.", 4),
+    ]
+    for cls, sub_name, tch, title, desc, days_ahead in homeworks_spec:
+        Homework.objects.get_or_create(
+            classroom=cls,
+            subject=subjects[sub_name],
+            teacher=tch,
+            title=title,
+            defaults={
+                'description': desc,
+                'due_date': today + timedelta(days=days_ahead),
+            },
+        )
 
     # 10. Davomat (Attendance)
-    today = timezone.now().date()
-    Attendance.objects.get_or_create(student=student1, date=today, defaults={'classroom': class_9a, 'status': 'present'})
-    Attendance.objects.get_or_create(student=student1, date=today - timedelta(days=1), defaults={'classroom': class_9a, 'status': 'present'})
-    Attendance.objects.get_or_create(student=student1, date=today - timedelta(days=2), defaults={'classroom': class_9a, 'status': 'late', 'note': "10 daqiqa kechikdi"})
-    Attendance.objects.get_or_create(student=student1, date=today - timedelta(days=3), defaults={'classroom': class_9a, 'status': 'present'})
+    Attendance.objects.get_or_create(
+        student=student1,
+        date=today,
+        subject=subjects["Matematika"],
+        defaults={'classroom': class_9a, 'teacher': teacher1, 'status': 'present'},
+    )
+    Attendance.objects.get_or_create(
+        student=student1,
+        date=today - timedelta(days=1),
+        subject=subjects["Ingliz tili"],
+        defaults={'classroom': class_9a, 'teacher': teacher2, 'status': 'present'},
+    )
+    Attendance.objects.get_or_create(
+        student=student1,
+        date=today - timedelta(days=2),
+        subject=subjects["Fizika"],
+        defaults={'classroom': class_9a, 'teacher': teacher3, 'status': 'late', 'note': "10 daqiqa kechikdi"},
+    )
 
     print("Barcha namunaviy ma'lumotlar muvaffaqiyatli tayyorlandi!")
+    print(f"Maktablar: {School.objects.count()} | Fanlar: {Subject.objects.count()} | Sinflar: {Classroom.objects.count()}")
+    print(f"Ustozlar: {User.objects.filter(role='teacher').count()} | O'quvchilar: {User.objects.filter(role='student').count()} | Dars jadvallari: {Schedule.objects.count()}")
+
 
 if __name__ == '__main__':
     create_data()
+    try:
+        from create_sample_posts import populate_posts
+        populate_posts()
+    except Exception as exc:
+        print(f"Postlarni yaratishda ogohlantirish: {exc}")

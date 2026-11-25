@@ -160,9 +160,15 @@
                     </div>
                     {% else %}
                     <div class="text-center py-4 text-muted">
-                        <i class="fa-solid fa-calendar-check fs-2 text-primary mb-2"></i>
-                        <h6 class="fw-bold mb-1">{{ t.today_lessons }} (0)</h6>
-                        <p class="small mb-0">{{ t.timetable }}</p>
+                        {% if is_sunday %}
+                            <i class="fa-solid fa-umbrella-beach fs-2 text-warning mb-2"></i>
+                            <h6 class="fw-bold text-dark mb-1">Yakshanba — Dam olish kuni!</h6>
+                            <p class="small mb-0">Bugun darslar yo'q. Dam olish kunidan maroqli foydalaning!</p>
+                        {% else %}
+                            <i class="fa-solid fa-calendar-check fs-2 text-primary mb-2"></i>
+                            <h6 class="fw-bold mb-1">{{ t.today_lessons }} (0)</h6>
+                            <p class="small mb-0">{{ t.timetable }}</p>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>

@@ -20,17 +20,21 @@
         </div>
     </div>
 
-    <!-- Haftalik dars jadvali (6 kun) -->
+    <!-- Haftalik dars jadvali (Dushanba-Shanba + Yakshanba dam olish kuni) -->
     <div class="row g-4">
         {% for day in days_data %}
             <div class="col-md-6 col-xl-4">
-                <div class="card card-modern h-100 {% if day.day_num == today_weekday %}timetable-day-today{% else %}timetable-day-card{% endif %} p-4">
+                <div class="card card-modern h-100 {% if day.is_rest_day %}border-warning border-2{% elif day.day_num == today_weekday %}timetable-day-today{% else %}timetable-day-card{% endif %} p-4">
                     <!-- Kun sarlavhasi -->
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                         <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-calendar-day text-primary"></i> {{ day.day_num|t_day:current_lang }}
+                            <i class="fa-solid {% if day.is_rest_day %}fa-sun text-warning{% else %}fa-calendar-day text-primary{% endif %}"></i> {{ day.day_num|t_day:current_lang }}
                         </h5>
-                        {% if day.day_num == today_weekday %}
+                        {% if day.is_rest_day %}
+                            <span class="badge bg-warning text-dark px-3 py-1 rounded-pill small fw-bold">
+                                <i class="fa-solid fa-mug-hot me-1"></i> Dam olish kuni
+                            </span>
+                        {% elif day.day_num == today_weekday %}
                             <span class="badge bg-success text-white px-3 py-1 rounded-pill small fw-bold">
                                 <i class="fa-solid fa-circle-dot me-1"></i> {{ t.today }}
                             </span>
@@ -39,7 +43,13 @@
 
                     <!-- Darslar ro'yxati -->
                     <div class="d-flex flex-column gap-2 flex-grow-1">
-                        {% if day.lessons %}
+                        {% if day.is_rest_day %}
+                            <div class="text-center py-5 text-muted my-auto">
+                                <i class="fa-solid fa-umbrella-beach fs-1 text-warning mb-2"></i>
+                                <h6 class="fw-bold text-dark mb-1">Yakshanba — Dam olish kuni!</h6>
+                                <p class="small mb-0 fw-medium">Bugun dam olish kuni, darslar yo'q.</p>
+                            </div>
+                        {% elif day.lessons %}
                             {% for lesson in day.lessons %}
                                 <div class="timeline-item d-flex align-items-center justify-content-between">
                                     <div class="d-flex align-items-center gap-2">

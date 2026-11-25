@@ -100,22 +100,20 @@ def student_dashboard(request):
 
     classroom = user.classroom
     school = user.school or (classroom.school if classroom else None)
+    if classroom:
+        from .schedule_utils import ensure_classroom_schedule
+        ensure_classroom_schedule(classroom)
 
     # Baholar
     grades = Grade.objects.filter(student=user).select_related('subject', 'teacher')
     avg_grade = grades.aggregate(avg=Avg('grade'))['avg'] or 0.0
 
-    # Kundalik jadvali (bugun)
-    weekday = timezone.now().isoweekday()  # 1: Monday ... 7: Sunday
+    # Kundalik jadvali (bugun: Dushanba-Shanba to'liq, Yakshanba dam olish kuni)
+    weekday = timezone.localtime(timezone.now()).isoweekday()  # 1: Monday ... 7: Sunday
+    is_sunday = (weekday == 7)
     today_lessons = []
-    # O'quvchining sinf bosqichini aniqlash (4-dan past: shanba yo'q, 5+: shanba bor)
-    grade_level = classroom.grade_level if classroom else 1
-    # Shanba kuni (6) filtri: 4-sinfdan past o'quvchilar uchun shanba yo'q
     if classroom and weekday <= 6:
-        if weekday == 6 and grade_level < 5:  # Shanba, 4-sinfdan past
-            today_lessons = []
-        else:
-            today_lessons = Schedule.objects.filter(classroom=classroom, day_of_week=weekday).select_related('subject', 'teacher')
+        today_lessons = Schedule.objects.filter(classroom=classroom, day_of_week=weekday).select_related('subject', 'teacher')
 
     # Hozirgi dars (joriy vaqt asosida)
     from datetime import datetime as dt
@@ -180,6 +178,8 @@ def student_dashboard(request):
         'avg_grade': round(avg_grade, 2),
         'recent_grades': grades[:6],
         'today_lessons': today_lessons,
+        'today_weekday': weekday,
+        'is_sunday': is_sunday,
         'current_lesson': current_lesson,
         'current_lesson_end_seconds': current_lesson_end_seconds,
         'homeworks': homeworks,
@@ -234,25 +234,30 @@ def student_timetable(request):
 
     classroom = user.classroom
     days_data = []
-    # O'quvchining sinf bosqichini aniqlash
     grade_level = classroom.grade_level if classroom else 1
     
     if classroom:
+        from .schedule_utils import ensure_classroom_schedule
+        ensure_classroom_schedule(classroom)
         for day_num, day_name in Schedule.DAYS_OF_WEEK:
-            # Shanba kuni (6): 4-sinfdan past o'quvchilar uchun ko'rsatmaslik
-            if day_num == 6 and grade_level < 5:
-                continue  # Shanba kuni 4-sinfdan past uchun yo'q
             lessons = Schedule.objects.filter(classroom=classroom, day_of_week=day_num).select_related('subject', 'teacher')
             days_data.append({
                 'day_num': day_num,
                 'day_name': day_name,
-                'lessons': lessons
+                'lessons': lessons,
+                'is_rest_day': False,
             })
+        days_data.append({
+            'day_num': 7,
+            'day_name': 'Yakshanba',
+            'lessons': [],
+            'is_rest_day': True,
+        })
 
     return render(request, 'student/timetable.html', {
         'classroom': classroom,
         'days_data': days_data,
-        'today_weekday': timezone.now().isoweekday(),
+        'today_weekday': timezone.localtime(timezone.now()).isoweekday(),
         'grade_level': grade_level,
     })
 
@@ -393,8 +398,9 @@ def teacher_dashboard(request):
     # Ustoz qo'ygan so'nggi baholar
     recent_grades = Grade.objects.filter(teacher=user).select_related('student', 'subject')[:8]
     
-    # Bugungi darslar
-    weekday = timezone.now().isoweekday()
+    # Bugungi darslar (Yakshanba dam olish kuni)
+    weekday = timezone.localtime(timezone.now()).isoweekday()
+    is_sunday = (weekday == 7)
     today_lessons = []
     if weekday <= 6:
         today_lessons = Schedule.objects.filter(teacher=user, day_of_week=weekday).select_related('classroom', 'subject')
@@ -408,6 +414,8 @@ def teacher_dashboard(request):
         'all_classes': all_classes,
         'recent_grades': recent_grades,
         'today_lessons': today_lessons,
+        'today_weekday': weekday,
+        'is_sunday': is_sunday,
         'my_homeworks': my_homeworks,
     })
 
@@ -677,12 +685,19 @@ def teacher_timetable(request):
         days_data.append({
             'day_num': day_num,
             'day_name': day_name,
-            'lessons': lessons
+            'lessons': lessons,
+            'is_rest_day': False,
         })
+    days_data.append({
+        'day_num': 7,
+        'day_name': 'Yakshanba',
+        'lessons': [],
+        'is_rest_day': True,
+    })
 
     return render(request, 'teacher/timetable.html', {
         'days_data': days_data,
-        'today_weekday': timezone.now().isoweekday(),
+        'today_weekday': timezone.localtime(timezone.now()).isoweekday(),
     })
 
 

@@ -194,9 +194,9 @@
                         <i class="fa-regular fa-clock fs-4"></i>
                     </div>
                     <div>
-                        <div class="fw-bold text-dark mb-0">Hozir dars yo'q</div>
+                        <div class="fw-bold text-dark mb-0">{% if is_sunday %}Yakshanba — Dam olish kuni!{% else %}Hozir dars yo'q{% endif %}</div>
                         <div class="text-muted small">
-                            {% if today_lessons %}Bugun {{ today_lessons|length }} ta dars rejalashtirilgan{% else %}Bugun dars kuni emas{% endif %}
+                            {% if is_sunday %}Bugun dam olish kuni, darslar yo'q.{% elif today_lessons %}Bugun {{ today_lessons|length }} ta dars rejalashtirilgan{% else %}Bugun dars kuni emas{% endif %}
                         </div>
                     </div>
                     <a href="{% url 'student_timetable' %}" class="btn btn-sm btn-outline-primary rounded-pill ms-auto px-3 fw-semibold">Jadvalni ko'rish</a>
@@ -244,9 +244,15 @@
                     </div>
                     {% else %}
                     <div class="text-center py-4 text-muted">
-                        <i class="fa-solid fa-calendar-day fs-2 text-primary mb-2"></i>
-                        <h6 class="fw-bold mb-1">{{ t.today_lessons }} (0)</h6>
-                        <p class="small mb-0">{{ t.timetable }}</p>
+                        {% if is_sunday %}
+                            <i class="fa-solid fa-umbrella-beach fs-2 text-warning mb-2"></i>
+                            <h6 class="fw-bold text-dark mb-1">Yakshanba — Dam olish kuni!</h6>
+                            <p class="small mb-0">Dushanba–Shanba dars jadvalini ko'rish uchun "Kundalik jadvali"ga o'ting.</p>
+                        {% else %}
+                            <i class="fa-solid fa-calendar-day fs-2 text-primary mb-2"></i>
+                            <h6 class="fw-bold mb-1">{{ t.today_lessons }} (0)</h6>
+                            <p class="small mb-0">{{ t.timetable }}</p>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>

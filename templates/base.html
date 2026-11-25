@@ -53,9 +53,15 @@
                     {% if user.is_authenticated %}
                     {% if user.role == 'admin' or user.is_staff or user.is_superuser %}
                     <li class="nav-item">
-                        <a class="nav-link-custom nav-link-admin {% if request.resolver_match.app_name == 'admin_panel' or 'admin' in request.resolver_match.url_name %}active{% endif %}"
+                        <a class="nav-link-custom nav-link-admin {% if request.resolver_match.url_name == 'admin_panel_dashboard' %}active{% endif %}"
                             href="{% url 'admin_panel_dashboard' %}">
                             <i class="fa-solid fa-shield-halved"></i> {{ t.admin_panel }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'admin_timetable' %}active{% endif %}"
+                            href="{% url 'admin_timetable' %}">
+                            <i class="fa-solid fa-calendar-days text-primary"></i> {{ t.timetable }}
                         </a>
                     </li>
                     {% elif user.role == 'teacher' %}
